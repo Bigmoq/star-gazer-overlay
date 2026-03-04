@@ -1,5 +1,6 @@
 import StarInfoPanel from "@/components/StarInfoPanel";
 import StarCenterLabel from "@/components/StarCenterLabel";
+import IframeMask from "@/components/IframeMask";
 
 const starData = {
   customName: "Sarah's Star",
@@ -21,6 +22,9 @@ const Index = () => {
         className="absolute inset-0 w-full h-full border-none"
         allow="fullscreen"
       />
+
+      {/* Masks to hide Stellarium's own UI */}
+      <IframeMask />
 
       {/* Overlay 1: Info Panel */}
       <StarInfoPanel star={starData} />
