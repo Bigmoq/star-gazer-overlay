@@ -36,11 +36,19 @@ const StarView = () => {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
-      {/* Stellarium iframe */}
+      {/* Stellarium iframe - offset to hide sidebar/toolbar */}
       <iframe
         src={star.stellariumUrl}
         title="Stellarium Web - Star View"
-        className="absolute inset-0 w-full h-full border-none"
+        className="absolute border-none"
+        style={{
+          top: -50,
+          left: -300,
+          right: -20,
+          bottom: -60,
+          width: "calc(100% + 320px)",
+          height: "calc(100% + 110px)",
+        }}
         allow="fullscreen"
       />
 
