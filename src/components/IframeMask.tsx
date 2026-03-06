@@ -5,8 +5,8 @@ const IframeMask = () => {
       <div
         className="absolute top-0 left-0 right-0 z-[5]"
         style={{
-          height: 50,
-          background: "linear-gradient(to bottom, hsl(var(--background)) 60%, transparent)",
+          height: 55,
+          background: "linear-gradient(to bottom, hsl(var(--background)) 70%, transparent)",
           pointerEvents: "auto",
         }}
       />
@@ -15,18 +15,18 @@ const IframeMask = () => {
       <div
         className="absolute bottom-0 left-0 right-0 z-[5]"
         style={{
-          height: 140,
-          background: "linear-gradient(to top, hsl(var(--background)) 70%, transparent)",
+          height: 180,
+          background: "linear-gradient(to top, hsl(var(--background)) 75%, transparent)",
           pointerEvents: "auto",
         }}
       />
 
-      {/* Left-side: covers sidebar */}
+      {/* Left-side: covers sidebar & mobile promo */}
       <div
         className="absolute left-0 top-0 bottom-0 z-[5]"
         style={{
-          width: 60,
-          background: "linear-gradient(to right, hsl(var(--background)) 40%, transparent)",
+          width: 340,
+          background: "linear-gradient(to right, hsl(var(--background)) 60%, hsl(var(--background) / 0.85) 80%, transparent)",
           pointerEvents: "auto",
         }}
       />
