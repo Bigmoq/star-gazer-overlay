@@ -1,35 +1,32 @@
 const IframeMask = () => {
-  // Use the exact background color for seamless blending
-  const bg = "hsl(220 20% 4%)";
-
   return (
     <>
-      {/* Top - covers navbar/search bar */}
+      {/* Top - fully opaque strip then smooth fade */}
       <div
         className="absolute top-0 left-0 right-0 z-[5]"
         style={{
-          height: 70,
-          background: `linear-gradient(to bottom, ${bg} 55%, ${bg} / 0.8 75%, transparent)`,
+          height: 80,
+          background: "linear-gradient(to bottom, hsl(220 20% 4%) 50%, hsl(220 20% 4% / 0.7) 75%, transparent)",
           pointerEvents: "auto",
         }}
       />
 
-      {/* Bottom - covers toolbar, cookie banner */}
+      {/* Bottom - covers cookie banner + toolbar */}
       <div
         className="absolute bottom-0 left-0 right-0 z-[5]"
         style={{
-          height: 180,
-          background: `linear-gradient(to top, ${bg} 65%, ${bg} / 0.7 80%, transparent)`,
+          height: 200,
+          background: "linear-gradient(to top, hsl(220 20% 4%) 55%, hsl(220 20% 4% / 0.6) 75%, transparent)",
           pointerEvents: "auto",
         }}
       />
 
-      {/* Left - covers sidebar + mobile promo completely */}
+      {/* Left - fully opaque up to 320px, then smooth fade */}
       <div
         className="absolute left-0 top-0 bottom-0 z-[5]"
         style={{
-          width: 400,
-          background: `linear-gradient(to right, ${bg} 72%, ${bg} / 0.85 85%, ${bg} / 0.4 93%, transparent)`,
+          width: 450,
+          background: "linear-gradient(to right, hsl(220 20% 4%) 0%, hsl(220 20% 4%) 65%, hsl(220 20% 4% / 0.7) 82%, hsl(220 20% 4% / 0.2) 92%, transparent 100%)",
           pointerEvents: "auto",
         }}
       />
