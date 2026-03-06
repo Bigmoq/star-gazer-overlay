@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { findByCode } from "@/lib/starStore";
 import StarInfoPanel from "@/components/StarInfoPanel";
 import StarIntro from "@/components/StarIntro";
+import StarMarker from "@/components/StarMarker";
 import IframeMask from "@/components/IframeMask";
 import StarMessage from "@/components/StarMessage";
 import { ArrowRight, LocateFixed } from "lucide-react";
@@ -128,6 +129,7 @@ const StarView = () => {
               </div>
             </motion.div>
 
+            <StarMarker name={star.customName} />
             <StarInfoPanel star={panelData} />
             <StarMessage message={star.message} date={star.date} />
           </>
