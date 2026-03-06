@@ -45,9 +45,9 @@ const StarView = () => {
           top: -60,
           left: -300,
           right: -20,
-          bottom: -100,
+          bottom: -120,
           width: "calc(100% + 320px)",
-          height: "calc(100% + 160px)",
+          height: "calc(100% + 180px)",
         }}
         allow="fullscreen"
       />
