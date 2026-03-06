@@ -119,7 +119,7 @@ const StarView = () => {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: [0, 0.7, 0.7, 0] }}
-              transition={{ duration: 5, times: [0, 0.1, 0.7, 1] }}
+              transition={{ duration: 6, times: [0, 0.1, 0.6, 1] }}
               className="absolute top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
             >
               <div
@@ -129,7 +129,7 @@ const StarView = () => {
                   backdropFilter: "blur(8px)",
                 }}
               >
-                استخدم عجلة الماوس للتقريب والتبعيد 🔍
+                استخدم الأيقونات في الأسفل لتغيير عرض السماء 🔭
               </div>
             </motion.div>
 
