@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { findByCode } from "@/lib/starStore";
 import StarInfoPanel from "@/components/StarInfoPanel";
@@ -16,9 +16,18 @@ const StarView = () => {
   const star = code ? findByCode(decodeURIComponent(code)) : undefined;
   const [introDone, setIntroDone] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
-  const [markerKey, setMarkerKey] = useState(0);
   const [showMarker, setShowMarker] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Hide marker when user clicks on iframe (window loses focus)
+  const handleBlur = useCallback(() => {
+    setShowMarker(false);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("blur", handleBlur);
+    return () => window.removeEventListener("blur", handleBlur);
+  }, [handleBlur]);
 
   if (!star) {
     return (
@@ -45,7 +54,6 @@ const StarView = () => {
 
   const recenterStar = () => {
     setIframeKey((k) => k + 1);
-    setMarkerKey((k) => k + 1);
     setShowMarker(true);
   };
 
@@ -115,7 +123,7 @@ const StarView = () => {
               </Button>
             </motion.div>
 
-            {/* Zoom hint - appears briefly */}
+            {/* Hint - appears briefly */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: [0, 0.7, 0.7, 0] }}
@@ -133,7 +141,9 @@ const StarView = () => {
               </div>
             </motion.div>
 
-            <StarMarker key={markerKey} name={star.customName} visible={showMarker} />
+            <AnimatePresence>
+              {showMarker && <StarMarker name={star.customName} visible={showMarker} />}
+            </AnimatePresence>
             <StarInfoPanel star={panelData} />
             <StarMessage message={star.message} date={star.date} />
           </>
