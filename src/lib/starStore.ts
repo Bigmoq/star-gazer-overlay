@@ -62,7 +62,7 @@ function getSampleData(): StarRecord[] {
     {
       id: "sample-1",
       code: "SAO1818",
-      customName: "لمى",
+      customName: "ساره",
       originalName: "SAO 1818 (BD+82 324)",
       message: "نجمة مميزة لشخص مميز ✨",
       date: "2024-12-25",
