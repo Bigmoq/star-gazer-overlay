@@ -1,43 +1,36 @@
 const IframeMask = () => {
+  // Use the exact background color for seamless blending
+  const bg = "hsl(220 20% 4%)";
+
   return (
     <>
-      {/* Top edge fade - subtle, just hides the search bar */}
+      {/* Top - covers navbar/search bar */}
       <div
         className="absolute top-0 left-0 right-0 z-[5]"
         style={{
-          height: 56,
-          background: "linear-gradient(to bottom, hsl(220 20% 4%) 40%, hsl(220 20% 4% / 0.6) 70%, transparent)",
+          height: 70,
+          background: `linear-gradient(to bottom, ${bg} 55%, ${bg} / 0.8 75%, transparent)`,
           pointerEvents: "auto",
         }}
       />
 
-      {/* Bottom edge fade - hides toolbar & cookie */}
+      {/* Bottom - covers toolbar, cookie banner */}
       <div
         className="absolute bottom-0 left-0 right-0 z-[5]"
         style={{
-          height: 100,
-          background: "linear-gradient(to top, hsl(220 20% 4%) 30%, hsl(220 20% 4% / 0.5) 60%, transparent)",
+          height: 180,
+          background: `linear-gradient(to top, ${bg} 65%, ${bg} / 0.7 80%, transparent)`,
           pointerEvents: "auto",
         }}
       />
 
-      {/* Left sidebar cover - minimal, just hides the icons */}
+      {/* Left - covers sidebar + mobile promo completely */}
       <div
         className="absolute left-0 top-0 bottom-0 z-[5]"
         style={{
-          width: 50,
-          background: "linear-gradient(to right, hsl(220 20% 4%) 50%, transparent)",
+          width: 400,
+          background: `linear-gradient(to right, ${bg} 72%, ${bg} / 0.85 85%, ${bg} / 0.4 93%, transparent)`,
           pointerEvents: "auto",
-        }}
-      />
-
-      {/* Right edge - very subtle */}
-      <div
-        className="absolute right-0 top-0 bottom-0 z-[5]"
-        style={{
-          width: 20,
-          background: "linear-gradient(to left, hsl(220 20% 4% / 0.3), transparent)",
-          pointerEvents: "none",
         }}
       />
     </>
