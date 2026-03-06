@@ -16,6 +16,8 @@ const StarView = () => {
   const star = code ? findByCode(decodeURIComponent(code)) : undefined;
   const [introDone, setIntroDone] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
+  const [markerKey, setMarkerKey] = useState(0);
+  const [showMarker, setShowMarker] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   if (!star) {
