@@ -13,7 +13,13 @@ import { motion, AnimatePresence } from "framer-motion";
 const StarView = () => {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
-  const star = code ? findByCode(decodeURIComponent(code)) : undefined;
+  const starData = code ? findByCode(decodeURIComponent(code)) : undefined;
+  const star = starData ? {
+    ...starData,
+    stellariumUrl: starData.stellariumUrl.includes('fov=')
+      ? starData.stellariumUrl
+      : starData.stellariumUrl + (starData.stellariumUrl.includes('?') ? '&' : '?') + 'fov=0.5',
+  } : undefined;
   const [introDone, setIntroDone] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const [showMarker, setShowMarker] = useState(true);
