@@ -1,13 +1,13 @@
 const IframeMask = () => {
   return (
     <>
-      {/* Bottom thin strip - covers any remaining cookie banner edge */}
+      {/* Top thin edge */}
       <div
-        className="absolute bottom-0 left-0 right-0 z-[5]"
+        className="absolute top-0 left-0 right-0 z-[5]"
         style={{
-          height: 24,
-          background: "hsl(220 20% 4%)",
-          pointerEvents: "auto",
+          height: 8,
+          background: "linear-gradient(to bottom, hsl(220 20% 4% / 0.6), transparent)",
+          pointerEvents: "none",
         }}
       />
     </>

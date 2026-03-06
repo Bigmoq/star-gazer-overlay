@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { findByCode } from "@/lib/starStore";
 import StarInfoPanel from "@/components/StarInfoPanel";
+import StarCenterLabel from "@/components/StarCenterLabel";
 import IframeMask from "@/components/IframeMask";
 import StarMessage from "@/components/StarMessage";
 import { ArrowRight } from "lucide-react";
@@ -42,12 +43,12 @@ const StarView = () => {
         title="Stellarium Web - Star View"
         className="absolute border-none"
         style={{
-          top: -60,
+          top: -50,
           left: -300,
           right: -20,
-          bottom: -120,
+          bottom: 0,
           width: "calc(100% + 320px)",
-          height: "calc(100% + 180px)",
+          height: "calc(100% + 50px)",
         }}
         allow="fullscreen"
       />
@@ -66,6 +67,7 @@ const StarView = () => {
       </Button>
 
       <StarInfoPanel star={panelData} />
+      <StarCenterLabel name={star.customName} />
       <StarMessage message={star.message} date={star.date} />
     </div>
   );
