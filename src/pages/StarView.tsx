@@ -1,16 +1,19 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { findByCode } from "@/lib/starStore";
 import StarInfoPanel from "@/components/StarInfoPanel";
-import StarCenterLabel from "@/components/StarCenterLabel";
+import StarIntro from "@/components/StarIntro";
 import IframeMask from "@/components/IframeMask";
 import StarMessage from "@/components/StarMessage";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
 
 const StarView = () => {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const star = code ? findByCode(decodeURIComponent(code)) : undefined;
+  const [introDone, setIntroDone] = useState(false);
 
   if (!star) {
     return (
@@ -37,7 +40,7 @@ const StarView = () => {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
-      {/* Stellarium iframe - offset to hide sidebar/toolbar */}
+      {/* Stellarium iframe loads in background during intro */}
       <iframe
         src={star.stellariumUrl}
         title="Stellarium Web - Star View"
@@ -55,20 +58,44 @@ const StarView = () => {
 
       <IframeMask />
 
-      {/* Back button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => navigate("/")}
-        className="absolute top-4 right-4 z-20 glass-panel border-glass-border/40 text-foreground hover:bg-secondary/60"
-      >
-        <ArrowRight className="w-4 h-4 ml-1" />
-        رجوع
-      </Button>
+      {/* Intro overlay */}
+      <AnimatePresence>
+        {!introDone && (
+          <StarIntro
+            name={star.customName}
+            message={star.message}
+            date={star.date}
+            onComplete={() => setIntroDone(true)}
+          />
+        )}
+      </AnimatePresence>
 
-      <StarInfoPanel star={panelData} />
-      <StarCenterLabel name={star.customName} />
-      <StarMessage message={star.message} date={star.date} />
+      {/* UI elements appear after intro */}
+      <AnimatePresence>
+        {introDone && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="absolute top-4 right-4 z-20"
+            >
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/")}
+                className="glass-panel border-glass-border/40 text-foreground hover:bg-secondary/60"
+              >
+                <ArrowRight className="w-4 h-4 ml-1" />
+                رجوع
+              </Button>
+            </motion.div>
+
+            <StarInfoPanel star={panelData} />
+            <StarMessage message={star.message} date={star.date} />
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
