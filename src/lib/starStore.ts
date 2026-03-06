@@ -70,7 +70,7 @@ function getSampleData(): StarRecord[] {
       distance: "540 سنة ضوئية",
       spectralClass: "B0.5 III",
       constellation: "Perseus",
-      stellariumUrl: "https://stellarium-web.org/skysource/EpsilonPersei",
+      stellariumUrl: "https://stellarium-web.org/skysource/EpsilonPersei?fov=0.5",
       createdAt: new Date().toISOString(),
     },
   ];
