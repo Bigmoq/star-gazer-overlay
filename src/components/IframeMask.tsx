@@ -1,32 +1,32 @@
 const IframeMask = () => {
   return (
     <>
-      {/* Top cover - hides Stellarium navbar */}
+      {/* Top - fully opaque strip then smooth fade */}
       <div
         className="absolute top-0 left-0 right-0 z-[5]"
         style={{
-          height: 65,
-          background: "linear-gradient(to bottom, hsl(var(--background)) 70%, transparent)",
+          height: 80,
+          background: "linear-gradient(to bottom, hsl(220 20% 4%) 50%, hsl(220 20% 4% / 0.7) 75%, transparent)",
           pointerEvents: "auto",
         }}
       />
 
-      {/* Bottom cover - hides toolbar & cookie banner */}
+      {/* Bottom - covers cookie banner + toolbar */}
       <div
         className="absolute bottom-0 left-0 right-0 z-[5]"
         style={{
-          height: 180,
-          background: "linear-gradient(to top, hsl(var(--background)) 75%, transparent)",
+          height: 220,
+          background: "linear-gradient(to top, hsl(220 20% 4%) 55%, hsl(220 20% 4% / 0.7) 75%, transparent)",
           pointerEvents: "auto",
         }}
       />
 
-      {/* Left-side: covers sidebar & mobile promo */}
+      {/* Left - fully opaque up to 320px, then smooth fade */}
       <div
         className="absolute left-0 top-0 bottom-0 z-[5]"
         style={{
-          width: 380,
-          background: "linear-gradient(to right, hsl(var(--background)) 70%, hsl(var(--background) / 0.95) 88%, transparent)",
+          width: 450,
+          background: "linear-gradient(to right, hsl(220 20% 4%) 0%, hsl(220 20% 4%) 65%, hsl(220 20% 4% / 0.7) 82%, hsl(220 20% 4% / 0.2) 92%, transparent 100%)",
           pointerEvents: "auto",
         }}
       />
