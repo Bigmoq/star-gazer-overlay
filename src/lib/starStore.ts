@@ -61,16 +61,16 @@ function getSampleData(): StarRecord[] {
   const sample: StarRecord[] = [
     {
       id: "sample-1",
-      code: "HD12323",
+      code: "SAO1818",
       customName: "لمى",
-      originalName: "Epsilon Persei",
+      originalName: "SAO 1818 (BD+82 324)",
       message: "نجمة مميزة لشخص مميز ✨",
       date: "2024-12-25",
-      magnitude: 2.88,
-      distance: "540 سنة ضوئية",
-      spectralClass: "B0.5 III",
-      constellation: "Perseus",
-      stellariumUrl: "https://stellarium-web.org/skysource/EpsilonPersei?fov=0.5",
+      magnitude: 10.37,
+      distance: "617 سنة ضوئية",
+      spectralClass: "F0",
+      constellation: "Draco",
+      stellariumUrl: "https://stellarium-web.org/skysource/SAO1818?fov=0.5",
       createdAt: new Date().toISOString(),
     },
   ];
