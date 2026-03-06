@@ -1,33 +1,63 @@
 const IframeMask = () => {
   return (
     <>
-      {/* Top - fully opaque strip then smooth fade */}
+      {/* Top strip - just covers the thin navbar */}
       <div
         className="absolute top-0 left-0 right-0 z-[5]"
         style={{
-          height: 80,
-          background: "linear-gradient(to bottom, hsl(220 20% 4%) 50%, hsl(220 20% 4% / 0.7) 75%, transparent)",
+          height: 44,
+          background: "hsl(220 20% 4%)",
           pointerEvents: "auto",
         }}
       />
+      {/* Top fade - tiny smooth transition */}
+      <div
+        className="absolute left-0 right-0 z-[5]"
+        style={{
+          top: 44,
+          height: 20,
+          background: "linear-gradient(to bottom, hsl(220 20% 4%), transparent)",
+          pointerEvents: "none",
+        }}
+      />
 
-      {/* Bottom - covers cookie banner + toolbar */}
+      {/* Bottom strip - covers cookie banner + toolbar */}
       <div
         className="absolute bottom-0 left-0 right-0 z-[5]"
         style={{
-          height: 220,
-          background: "linear-gradient(to top, hsl(220 20% 4%) 55%, hsl(220 20% 4% / 0.7) 75%, transparent)",
+          height: 48,
+          background: "hsl(220 20% 4%)",
           pointerEvents: "auto",
         }}
       />
+      {/* Bottom fade */}
+      <div
+        className="absolute left-0 right-0 z-[5]"
+        style={{
+          bottom: 48,
+          height: 20,
+          background: "linear-gradient(to top, hsl(220 20% 4%), transparent)",
+          pointerEvents: "none",
+        }}
+      />
 
-      {/* Left - fully opaque up to 320px, then smooth fade */}
+      {/* Left strip - covers sidebar icons only */}
       <div
         className="absolute left-0 top-0 bottom-0 z-[5]"
         style={{
-          width: 450,
-          background: "linear-gradient(to right, hsl(220 20% 4%) 0%, hsl(220 20% 4%) 65%, hsl(220 20% 4% / 0.7) 82%, hsl(220 20% 4% / 0.2) 92%, transparent 100%)",
+          width: 44,
+          background: "hsl(220 20% 4%)",
           pointerEvents: "auto",
+        }}
+      />
+      {/* Left fade */}
+      <div
+        className="absolute top-0 bottom-0 z-[5]"
+        style={{
+          left: 44,
+          width: 16,
+          background: "linear-gradient(to right, hsl(220 20% 4%), transparent)",
+          pointerEvents: "none",
         }}
       />
     </>
