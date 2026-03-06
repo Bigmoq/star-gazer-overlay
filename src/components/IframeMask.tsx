@@ -16,7 +16,7 @@ const IframeMask = () => {
         className="absolute bottom-0 left-0 right-0 z-[5]"
         style={{
           height: 220,
-          background: "linear-gradient(to top, hsl(220 20% 4%) 50%, hsl(220 20% 4% / 0.5) 72%, transparent)",
+          background: "linear-gradient(to top, hsl(220 20% 4%) 55%, hsl(220 20% 4% / 0.7) 75%, transparent)",
           pointerEvents: "auto",
         }}
       />
