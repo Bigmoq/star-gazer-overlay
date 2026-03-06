@@ -1,12 +1,21 @@
 const IframeMask = () => {
   return (
     <>
-      {/* Top thin edge */}
+      {/* Left edge - hide tiny "he si..." cookie text remnant */}
       <div
-        className="absolute top-0 left-0 right-0 z-[5]"
+        className="absolute left-0 top-0 bottom-0 z-[5]"
         style={{
-          height: 8,
-          background: "linear-gradient(to bottom, hsl(220 20% 4% / 0.6), transparent)",
+          width: 16,
+          background: "linear-gradient(to right, hsl(220 20% 4%), transparent)",
+          pointerEvents: "none",
+        }}
+      />
+      {/* Right edge - hide time display */}
+      <div
+        className="absolute right-0 top-0 bottom-0 z-[5]"
+        style={{
+          width: 16,
+          background: "linear-gradient(to left, hsl(220 20% 4%), transparent)",
           pointerEvents: "none",
         }}
       />
