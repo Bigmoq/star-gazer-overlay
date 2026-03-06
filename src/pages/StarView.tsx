@@ -16,6 +16,8 @@ const StarView = () => {
   const star = code ? findByCode(decodeURIComponent(code)) : undefined;
   const [introDone, setIntroDone] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
+  const [markerKey, setMarkerKey] = useState(0);
+  const [showMarker, setShowMarker] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   if (!star) {
@@ -43,6 +45,8 @@ const StarView = () => {
 
   const recenterStar = () => {
     setIframeKey((k) => k + 1);
+    setMarkerKey((k) => k + 1);
+    setShowMarker(true);
   };
 
   return (
@@ -129,7 +133,7 @@ const StarView = () => {
               </div>
             </motion.div>
 
-            <StarMarker name={star.customName} />
+            <StarMarker key={markerKey} name={star.customName} visible={showMarker} />
             <StarInfoPanel star={panelData} />
             <StarMessage message={star.message} date={star.date} />
           </>
