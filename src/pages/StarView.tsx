@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { findByCode } from "@/lib/starStore";
 import StarInfoPanel from "@/components/StarInfoPanel";
 import StarIntro from "@/components/StarIntro";
 import IframeMask from "@/components/IframeMask";
 import StarMessage from "@/components/StarMessage";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, LocateFixed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -14,6 +14,8 @@ const StarView = () => {
   const navigate = useNavigate();
   const star = code ? findByCode(decodeURIComponent(code)) : undefined;
   const [introDone, setIntroDone] = useState(false);
+  const [iframeKey, setIframeKey] = useState(0);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   if (!star) {
     return (
@@ -38,10 +40,16 @@ const StarView = () => {
     constellation: star.constellation,
   };
 
+  const recenterStar = () => {
+    setIframeKey((k) => k + 1);
+  };
+
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
-      {/* Stellarium iframe loads in background during intro */}
+      {/* Stellarium iframe */}
       <iframe
+        ref={iframeRef}
+        key={iframeKey}
         src={star.stellariumUrl}
         title="Stellarium Web - Star View"
         className="absolute border-none"
@@ -74,12 +82,23 @@ const StarView = () => {
       <AnimatePresence>
         {introDone && (
           <>
+            {/* Top-right controls */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="absolute top-4 right-4 z-20"
+              className="absolute top-4 right-4 z-20 flex gap-2"
             >
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={recenterStar}
+                className="glass-panel border-glass-border/40 text-foreground hover:bg-secondary/60"
+                title="العودة للنجم"
+              >
+                <LocateFixed className="w-4 h-4 ml-1" />
+                تحديد النجم
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
@@ -89,6 +108,24 @@ const StarView = () => {
                 <ArrowRight className="w-4 h-4 ml-1" />
                 رجوع
               </Button>
+            </motion.div>
+
+            {/* Zoom hint - appears briefly */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: [0, 0.7, 0.7, 0] }}
+              transition={{ duration: 5, times: [0, 0.1, 0.7, 1] }}
+              className="absolute top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
+            >
+              <div
+                className="px-4 py-2 rounded-full text-sm font-body text-foreground/80"
+                style={{
+                  background: "hsl(var(--background) / 0.6)",
+                  backdropFilter: "blur(8px)",
+                }}
+              >
+                استخدم عجلة الماوس للتقريب والتبعيد 🔍
+              </div>
             </motion.div>
 
             <StarInfoPanel star={panelData} />
