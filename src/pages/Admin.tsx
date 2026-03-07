@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import AdminAuth from "@/components/AdminAuth";
 import { Star, Plus, Trash2, Copy, ExternalLink, Loader2, ChevronDown, ChevronUp, Telescope } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 const STELLARIUM_BASE = "https://stellarium-web.org/";
 
 const Admin = () => {
+  const [authenticated, setAuthenticated] = useState(() => sessionStorage.getItem("admin_auth") === "true");
   const [stars, setStars] = useState<StarRecord[]>(getAllStars());
   const [stellariumUrl, setStellariumUrl] = useState(STELLARIUM_BASE);
   const [iframeKey, setIframeKey] = useState(0);
@@ -107,6 +109,10 @@ const Admin = () => {
     navigator.clipboard.writeText(code);
     toast({ title: "تم نسخ الرمز" });
   };
+
+  if (!authenticated) {
+    return <AdminAuth onAuthenticated={() => setAuthenticated(true)} />;
+  }
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
