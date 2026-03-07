@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 const STELLARIUM_BASE = "https://stellarium-web.org/";
 
 const Admin = () => {
+  const [authenticated, setAuthenticated] = useState(() => sessionStorage.getItem("admin_auth") === "true");
   const [stars, setStars] = useState<StarRecord[]>(getAllStars());
   const [stellariumUrl, setStellariumUrl] = useState(STELLARIUM_BASE);
   const [iframeKey, setIframeKey] = useState(0);
