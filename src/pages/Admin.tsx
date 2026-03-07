@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import AdminAuth from "@/components/AdminAuth";
 import { Star, Plus, Trash2, Copy, ExternalLink, Loader2, ChevronDown, ChevronUp, Telescope } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
