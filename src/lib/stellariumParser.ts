@@ -19,10 +19,10 @@ export function formatStarCode(id: string): string {
 export async function fetchStarData(identifier: string): Promise<StarFetchResult | null> {
   try {
     // Use SIMBAD TAP query
-    const query = `SELECT TOP 1 basic.OID, basic.main_id, basic.sp_type, basic.otype_txt, flux.V as vmag, ident.id 
+    const query = `SELECT TOP 1 basic.OID, basic.main_id, basic.sp_type, basic.otype_txt, allfluxes.V as vmag, ident.id 
 FROM basic 
 JOIN ident ON basic.oid = ident.oidref 
-LEFT JOIN flux ON basic.oid = flux.oidref AND flux.filter = 'V'
+LEFT JOIN allfluxes ON basic.oid = allfluxes.oidref
 WHERE ident.id = '${identifier.replace(/([A-Za-z]+)(\d+)/, "$1 $2")}'`;
 
     const url = `https://simbad.cds.unistra.fr/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query=${encodeURIComponent(query)}`;
