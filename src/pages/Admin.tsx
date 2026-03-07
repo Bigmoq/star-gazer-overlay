@@ -110,6 +110,10 @@ const Admin = () => {
     toast({ title: "تم نسخ الرمز" });
   };
 
+  if (!authenticated) {
+    return <AdminAuth onAuthenticated={() => setAuthenticated(true)} />;
+  }
+
   return (
     <div className="min-h-screen bg-background" dir="rtl">
       {/* Header */}
