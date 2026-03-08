@@ -19,6 +19,7 @@ const Admin = () => {
   const [iframeKey, setIframeKey] = useState(0);
   const [showList, setShowList] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [editingStar, setEditingStar] = useState<StarRecord | null>(null);
 
   const [form, setForm] = useState({
     pastedUrl: "", code: "", customName: "", originalName: "", message: "", date: "", magnitude: "", distance: "", spectralClass: "", constellation: "", stellariumUrl: "",
