@@ -1,39 +1,52 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { findByCode } from "@/lib/starStore";
+import { findByCode, type StarRecord } from "@/lib/starStore";
 import StarInfoPanel from "@/components/StarInfoPanel";
 import StarIntro from "@/components/StarIntro";
 import StarMarker from "@/components/StarMarker";
 import IframeMask from "@/components/IframeMask";
 import StarMessage from "@/components/StarMessage";
-import { ArrowRight, LocateFixed } from "lucide-react";
+import { ArrowRight, LocateFixed, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
 const StarView = () => {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
-  const starData = code ? findByCode(decodeURIComponent(code)) : undefined;
-  const star = starData ? {
-    ...starData,
-    stellariumUrl: starData.stellariumUrl.includes('fov=')
-      ? starData.stellariumUrl
-      : starData.stellariumUrl + (starData.stellariumUrl.includes('?') ? '&' : '?') + 'fov=0.5',
-  } : undefined;
+  const [star, setStar] = useState<StarRecord | null>(null);
+  const [loading, setLoading] = useState(true);
   const [introDone, setIntroDone] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const [showMarker, setShowMarker] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Hide marker when user clicks on iframe (window loses focus)
-  const handleBlur = useCallback(() => {
-    setShowMarker(false);
-  }, []);
+  useEffect(() => {
+    if (!code) { setLoading(false); return; }
+    findByCode(decodeURIComponent(code)).then((data) => {
+      if (data) {
+        const url = data.stellariumUrl.includes('fov=')
+          ? data.stellariumUrl
+          : data.stellariumUrl + (data.stellariumUrl.includes('?') ? '&' : '?') + 'fov=0.5';
+        setStar({ ...data, stellariumUrl: url });
+      }
+      setLoading(false);
+    });
+  }, [code]);
+
+  const handleBlur = useCallback(() => { setShowMarker(false); }, []);
 
   useEffect(() => {
     window.addEventListener("blur", handleBlur);
     return () => window.removeEventListener("blur", handleBlur);
   }, [handleBlur]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!star) {
     return (
@@ -65,7 +78,6 @@ const StarView = () => {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
-      {/* Stellarium iframe */}
       <iframe
         ref={iframeRef}
         key={iframeKey}
@@ -73,80 +85,33 @@ const StarView = () => {
         title="Stellarium Web - Star View"
         className="absolute border-none"
         style={{
-          top: -50,
-          left: -300,
-          right: -20,
-          bottom: 0,
-          width: "calc(100% + 320px)",
-          height: "calc(100% + 50px)",
+          top: -50, left: -300, right: -20, bottom: 0,
+          width: "calc(100% + 320px)", height: "calc(100% + 50px)",
         }}
         allow="fullscreen"
       />
-
       <IframeMask />
-
-      {/* Intro overlay */}
       <AnimatePresence>
         {!introDone && (
-          <StarIntro
-            name={star.customName}
-            message={star.message}
-            date={star.date}
-            onComplete={() => setIntroDone(true)}
-          />
+          <StarIntro name={star.customName} message={star.message} date={star.date} onComplete={() => setIntroDone(true)} />
         )}
       </AnimatePresence>
-
-      {/* UI elements appear after intro */}
       <AnimatePresence>
         {introDone && (
           <>
-            {/* Top-right controls */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="absolute top-4 right-4 z-20 flex gap-2"
-            >
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={recenterStar}
-                className="glass-panel border-glass-border/40 text-foreground hover:bg-secondary/60"
-                title="العودة للنجم"
-              >
-                <LocateFixed className="w-4 h-4 ml-1" />
-                تحديد النجم
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 0.3 }} className="absolute top-4 right-4 z-20 flex gap-2">
+              <Button variant="ghost" size="sm" onClick={recenterStar} className="glass-panel border-glass-border/40 text-foreground hover:bg-secondary/60" title="العودة للنجم">
+                <LocateFixed className="w-4 h-4 ml-1" /> تحديد النجم
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/")}
-                className="glass-panel border-glass-border/40 text-foreground hover:bg-secondary/60"
-              >
-                <ArrowRight className="w-4 h-4 ml-1" />
-                رجوع
+              <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="glass-panel border-glass-border/40 text-foreground hover:bg-secondary/60">
+                <ArrowRight className="w-4 h-4 ml-1" /> رجوع
               </Button>
             </motion.div>
-
-            {/* Hint - appears briefly */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: [0, 0.7, 0.7, 0] }}
-              transition={{ duration: 6, times: [0, 0.1, 0.6, 1] }}
-              className="absolute top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
-            >
-              <div
-                className="px-4 py-2 rounded-full text-sm font-body text-foreground/80"
-                style={{
-                  background: "hsl(var(--background) / 0.6)",
-                  backdropFilter: "blur(8px)",
-                }}
-              >
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: [0, 0.7, 0.7, 0] }} transition={{ duration: 6, times: [0, 0.1, 0.6, 1] }} className="absolute top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+              <div className="px-4 py-2 rounded-full text-sm font-body text-foreground/80" style={{ background: "hsl(var(--background) / 0.6)", backdropFilter: "blur(8px)" }}>
                 استخدم الأيقونات في الأسفل لتغيير عرض السماء 🔭
               </div>
             </motion.div>
-
             <AnimatePresence>
               {showMarker && <StarMarker name={star.customName} visible={showMarker} />}
             </AnimatePresence>

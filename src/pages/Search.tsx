@@ -12,13 +12,12 @@ const Search = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!code.trim()) return;
     setLoading(true);
-    
-    // Simulate brief loading
-    setTimeout(() => {
-      const star = findByCode(code.trim());
+
+    try {
+      const star = await findByCode(code.trim());
       if (star) {
         navigate(`/star/${encodeURIComponent(star.code)}`);
       } else {
@@ -28,8 +27,15 @@ const Search = () => {
           variant: "destructive",
         });
       }
+    } catch {
+      toast({
+        title: "حدث خطأ",
+        description: "حاول مرة أخرى لاحقاً",
+        variant: "destructive",
+      });
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (
@@ -58,7 +64,6 @@ const Search = () => {
         transition={{ duration: 0.8 }}
         className="w-full max-w-md text-center z-10"
       >
-        {/* Logo */}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -75,7 +80,6 @@ const Search = () => {
           أدخل الرمز الخاص بك لعرض نجمتك
         </p>
 
-        {/* Search box */}
         <div className="glass-panel rounded-2xl p-6 space-y-4">
           <div className="relative">
             <SearchIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -98,9 +102,8 @@ const Search = () => {
           </Button>
         </div>
 
-        {/* Sample hint */}
         <p className="text-xs text-muted-foreground/60 mt-4 font-body">
-          جرب الرمز: HD12323
+          جرب الرمز: SAO1818
         </p>
       </motion.div>
     </div>

@@ -1,13 +1,12 @@
-// Local star registry store using localStorage
-// Ready to be replaced with Supabase when connected
+import { supabase } from "./supabaseClient";
 
 export interface StarRecord {
   id: string;
-  code: string; // unique search code (e.g. "HD12323")
-  customName: string; // customer name (e.g. "لمى")
-  originalName: string; // original catalog name
-  message: string; // personal message
-  date: string; // dedication date
+  code: string;
+  customName: string;
+  originalName: string;
+  message: string;
+  date: string;
   magnitude: number;
   distance: string;
   spectralClass: string;
@@ -16,93 +15,81 @@ export interface StarRecord {
   createdAt: string;
 }
 
-const STORAGE_KEY = "star_registry";
-
-function getAll(): StarRecord[] {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : getSampleData();
-  } catch {
-    return getSampleData();
-  }
+interface DbRow {
+  id: string;
+  code: string;
+  custom_name: string;
+  original_name: string;
+  message: string;
+  date: string;
+  magnitude: number;
+  distance: string;
+  spectral_class: string;
+  constellation: string;
+  stellarium_url: string;
+  created_at: string;
 }
 
-function save(records: StarRecord[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-}
-
-export function findByCode(code: string): StarRecord | undefined {
-  const all = getAll();
-  return all.find((s) => s.code.toLowerCase() === code.toLowerCase());
-}
-
-export function addStar(star: Omit<StarRecord, "id" | "createdAt">): StarRecord {
-  const all = getAll();
-  const record: StarRecord = {
-    ...star,
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
+function rowToStar(row: DbRow): StarRecord {
+  return {
+    id: row.id,
+    code: row.code,
+    customName: row.custom_name,
+    originalName: row.original_name,
+    message: row.message,
+    date: row.date,
+    magnitude: row.magnitude,
+    distance: row.distance,
+    spectralClass: row.spectral_class,
+    constellation: row.constellation,
+    stellariumUrl: row.stellarium_url,
+    createdAt: row.created_at,
   };
-  all.push(record);
-  save(all);
-  return record;
 }
 
-export function getAllStars(): StarRecord[] {
-  return getAll();
+export async function findByCode(code: string): Promise<StarRecord | undefined> {
+  const { data, error } = await supabase
+    .from("star_registry")
+    .select("*")
+    .ilike("code", code)
+    .maybeSingle();
+
+  if (error || !data) return undefined;
+  return rowToStar(data as DbRow);
 }
 
-export function deleteStar(id: string) {
-  const all = getAll().filter((s) => s.id !== id);
-  save(all);
+export async function addStar(star: Omit<StarRecord, "id" | "createdAt">): Promise<StarRecord> {
+  const { data, error } = await supabase
+    .from("star_registry")
+    .insert({
+      code: star.code,
+      custom_name: star.customName,
+      original_name: star.originalName || star.code,
+      message: star.message,
+      date: star.date,
+      magnitude: star.magnitude,
+      distance: star.distance,
+      spectral_class: star.spectralClass,
+      constellation: star.constellation,
+      stellarium_url: star.stellariumUrl,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return rowToStar(data as DbRow);
 }
 
-function getSampleData(): StarRecord[] {
-  const sample: StarRecord[] = [
-    {
-      id: "sample-1",
-      code: "SAO1818",
-      customName: "ساره",
-      originalName: "SAO 1818 (BD+82 324)",
-      message: "نجمة مميزة لشخص مميز ✨",
-      date: "2024-12-25",
-      magnitude: 10.37,
-      distance: "617 سنة ضوئية",
-      spectralClass: "F0",
-      constellation: "Draco",
-      stellariumUrl: "https://stellarium-web.org/skysource/SAO1818?fov=0.5",
-      createdAt: new Date().toISOString(),
-    },
-  ];
-  save(sample);
-  return sample;
+export async function getAllStars(): Promise<StarRecord[]> {
+  const { data, error } = await supabase
+    .from("star_registry")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) return [];
+  return (data as DbRow[]).map(rowToStar);
 }
 
-// SQL schema for Supabase (for future use):
-export const SUPABASE_SQL = `
-CREATE TABLE star_registry (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  code TEXT UNIQUE NOT NULL,
-  custom_name TEXT NOT NULL,
-  original_name TEXT NOT NULL,
-  message TEXT DEFAULT '',
-  date DATE NOT NULL,
-  magnitude NUMERIC(5,2),
-  distance TEXT,
-  spectral_class TEXT,
-  constellation TEXT,
-  stellarium_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Enable RLS
-ALTER TABLE star_registry ENABLE ROW LEVEL SECURITY;
-
--- Allow public read by code
-CREATE POLICY "Public can search by code"
-  ON star_registry FOR SELECT
-  USING (true);
-
--- Index for fast search
-CREATE INDEX idx_star_code ON star_registry (code);
-`;
+export async function deleteStar(id: string): Promise<void> {
+  await supabase.from("star_registry").delete().eq("id", id);
+}
