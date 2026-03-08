@@ -208,6 +208,17 @@ const Admin = () => {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Edit Dialog */}
+      <AnimatePresence>
+        {editingStar && (
+          <EditStarDialog
+            star={editingStar}
+            onClose={() => setEditingStar(null)}
+            onUpdated={() => getAllStars().then(setStars)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
