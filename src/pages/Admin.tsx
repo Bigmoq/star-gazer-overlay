@@ -4,6 +4,7 @@ import AdminAuth from "@/components/AdminAuth";
 import RegisterDrawer from "@/components/RegisterDrawer";
 import StarsListPanel from "@/components/StarsListPanel";
 import EditStarDialog from "@/components/EditStarDialog";
+import IframeMask from "@/components/IframeMask";
 import { Star, List, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAllStars, deleteStar, type StarRecord } from "@/lib/starStore";
