@@ -30,7 +30,15 @@ const Admin = () => {
 
   useEffect(() => {
     if (authenticated) {
-      getAllStars().then(setStars);
+      // Seed demo data if table is empty, then load
+      getAllStars().then(async (existing) => {
+        if (existing.length === 0) {
+          await seedDemoStars();
+          setStars(await getAllStars());
+        } else {
+          setStars(existing);
+        }
+      });
     }
   }, [authenticated]);
 
