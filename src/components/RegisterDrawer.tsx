@@ -197,26 +197,51 @@ const RegisterDrawer = ({ onRegistered, onNavigate }: RegisterDrawerProps) => {
                 {/* Step: Paste URL */}
                 {step === "paste" && (
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                    <div className="glass-panel rounded-xl p-4 space-y-3">
-                      <div className="flex items-center gap-2 text-sm font-display font-semibold text-foreground">
-                        <ClipboardPaste className="w-4 h-4 text-primary" />
-                        الصق رابط النجم من Stellarium
+                    {loading && (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                        <span className="mr-2 text-sm text-muted-foreground font-body">جاري التحقق من النجم...</span>
                       </div>
-                      <p className="text-xs text-muted-foreground font-body leading-relaxed">
-                        تصفح السماء في الخريطة، اضغط على نجم، ثم انسخ الرابط من شريط العنوان في Stellarium والصقه هنا
-                      </p>
-                      <div className="relative">
-                        <Input
-                          value={pasteValue}
-                          onChange={(e) => handlePaste(e.target.value)}
-                          placeholder="https://stellarium-web.org/skysource/..."
-                          dir="ltr"
-                          className="bg-secondary/50 border-glass-border/40 text-xs h-11"
-                          autoFocus
-                        />
-                        {loading && <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-primary" />}
+                    )}
+
+                    {!loading && (
+                      <div className="glass-panel rounded-xl p-4 space-y-3">
+                        <div className="flex items-center gap-2 text-sm font-display font-semibold text-foreground">
+                          <ClipboardPaste className="w-4 h-4 text-primary" />
+                          الصق رابط النجم
+                        </div>
+                        <p className="text-xs text-muted-foreground font-body leading-relaxed">
+                          ١. اضغط على نجم في Stellarium<br/>
+                          ٢. انسخ الرابط من شريط العنوان<br/>
+                          ٣. اضغط "لصق من الحافظة" أو الصقه يدوياً
+                        </p>
+                        <Button
+                          variant="outline"
+                          className="w-full h-10 gap-2 text-sm font-display"
+                          onClick={async () => {
+                            try {
+                              const text = await navigator.clipboard.readText();
+                              if (text) await handlePaste(text);
+                              else toast({ title: "الحافظة فارغة", variant: "destructive" });
+                            } catch {
+                              toast({ title: "اسمح بالوصول للحافظة أو الصق يدوياً", variant: "destructive" });
+                            }
+                          }}
+                        >
+                          <ClipboardPaste className="w-4 h-4" />
+                          لصق من الحافظة
+                        </Button>
+                        <div className="relative">
+                          <Input
+                            value={pasteValue}
+                            onChange={(e) => handlePaste(e.target.value)}
+                            placeholder="أو الصق الرابط هنا يدوياً..."
+                            dir="ltr"
+                            className="bg-secondary/50 border-glass-border/40 text-xs h-10"
+                          />
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Star taken warning */}
                     <AnimatePresence>
