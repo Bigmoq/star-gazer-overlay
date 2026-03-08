@@ -114,21 +114,46 @@ const RegisterDrawer = ({ onRegistered, onNavigate }: RegisterDrawerProps) => {
     }
   };
 
+  // Auto-read clipboard when opening
+  const handleOpen = async () => {
+    setOpen(true);
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text && (text.includes("stellarium-web.org") || text.includes("skysource"))) {
+        await handlePaste(text);
+      }
+    } catch {
+      // Clipboard permission denied - user will paste manually
+    }
+  };
+
   return (
     <>
       {/* Floating action button */}
       {!open && (
-        <motion.button
+        <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-30 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:shadow-xl transition-shadow"
-          title="تسجيل نجم جديد"
+          className="fixed bottom-6 right-6 z-30 flex flex-col items-center gap-2"
         >
-          <Star className="w-6 h-6 fill-current" />
-        </motion.button>
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: [0, 1, 1, 0.7] }}
+            transition={{ duration: 4, repeat: Infinity, repeatType: "reverse" }}
+            className="text-xs font-body text-foreground/70 glass-panel rounded-lg px-3 py-1.5 pointer-events-none"
+          >
+            اختر نجماً ثم اضغط هنا ⭐
+          </motion.div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleOpen}
+            className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:shadow-xl transition-shadow"
+            title="تسجيل نجم جديد"
+          >
+            <Star className="w-6 h-6 fill-current" />
+          </motion.button>
+        </motion.div>
       )}
 
       {/* Drawer */}
