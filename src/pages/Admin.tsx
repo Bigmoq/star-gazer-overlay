@@ -1,13 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import AdminAuth from "@/components/AdminAuth";
-import { Star, Plus, Trash2, Copy, ExternalLink, Loader2, ChevronDown, ChevronUp, Telescope } from "lucide-react";
+import { Star, Plus, Trash2, Copy, ExternalLink, Loader2, ChevronDown, ChevronUp, Telescope, Pencil } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { addStar, getAllStars, deleteStar, type StarRecord } from "@/lib/starStore";
 import { extractStarIdFromUrl, fetchStarData } from "@/lib/stellariumParser";
 import { toast } from "@/hooks/use-toast";
+import EditStarDialog from "@/components/EditStarDialog";
 
 const STELLARIUM_BASE = "https://stellarium-web.org/";
 
@@ -18,6 +19,7 @@ const Admin = () => {
   const [iframeKey, setIframeKey] = useState(0);
   const [showList, setShowList] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [editingStar, setEditingStar] = useState<StarRecord | null>(null);
 
   const [form, setForm] = useState({
     pastedUrl: "", code: "", customName: "", originalName: "", message: "", date: "", magnitude: "", distance: "", spectralClass: "", constellation: "", stellariumUrl: "",
@@ -193,6 +195,7 @@ const Admin = () => {
                         </div>
                       </div>
                       <div className="flex gap-1 shrink-0">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingStar(s)} title="تعديل"><Pencil className="w-3.5 h-3.5" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyCode(s.code)} title="نسخ الرمز"><Copy className="w-3.5 h-3.5" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setStellariumUrl(s.stellariumUrl); setIframeKey((k) => k + 1); }} title="عرض في الخريطة"><ExternalLink className="w-3.5 h-3.5" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(s.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
@@ -205,6 +208,17 @@ const Admin = () => {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Edit Dialog */}
+      <AnimatePresence>
+        {editingStar && (
+          <EditStarDialog
+            star={editingStar}
+            onClose={() => setEditingStar(null)}
+            onUpdated={() => getAllStars().then(setStars)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

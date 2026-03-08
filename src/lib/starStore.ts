@@ -90,6 +90,30 @@ export async function getAllStars(): Promise<StarRecord[]> {
   return (data as DbRow[]).map(rowToStar);
 }
 
+export async function updateStar(id: string, star: Partial<Omit<StarRecord, "id" | "createdAt">>): Promise<StarRecord | null> {
+  const updates: Record<string, unknown> = {};
+  if (star.code !== undefined) updates.code = star.code;
+  if (star.customName !== undefined) updates.custom_name = star.customName;
+  if (star.originalName !== undefined) updates.original_name = star.originalName;
+  if (star.message !== undefined) updates.message = star.message;
+  if (star.date !== undefined) updates.date = star.date;
+  if (star.magnitude !== undefined) updates.magnitude = star.magnitude;
+  if (star.distance !== undefined) updates.distance = star.distance;
+  if (star.spectralClass !== undefined) updates.spectral_class = star.spectralClass;
+  if (star.constellation !== undefined) updates.constellation = star.constellation;
+  if (star.stellariumUrl !== undefined) updates.stellarium_url = star.stellariumUrl;
+
+  const { data, error } = await supabase
+    .from("star_registry")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error || !data) return null;
+  return rowToStar(data as DbRow);
+}
+
 export async function deleteStar(id: string): Promise<void> {
   await supabase.from("star_registry").delete().eq("id", id);
 }
