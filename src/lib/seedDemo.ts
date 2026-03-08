@@ -42,11 +42,16 @@ export async function seedDemoStars() {
   ];
 
   for (const star of demoStars) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("star_registry")
-      .upsert(star, { onConflict: "code" });
-    if (error) console.error(`Failed to seed ${star.code}:`, error.message);
+      .upsert(star, { onConflict: "code" })
+      .select();
+    if (error) {
+      console.error(`❌ Failed to seed ${star.code}:`, error.message, error.details, error.hint);
+    } else {
+      console.log(`✅ Seeded ${star.code}:`, data);
+    }
   }
 
-  console.log("✅ Demo stars seeded!");
+  console.log("🌟 Demo seed complete!");
 }
