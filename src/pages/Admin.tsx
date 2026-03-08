@@ -195,6 +195,7 @@ const Admin = () => {
                         </div>
                       </div>
                       <div className="flex gap-1 shrink-0">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingStar(s)} title="تعديل"><Pencil className="w-3.5 h-3.5" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyCode(s.code)} title="نسخ الرمز"><Copy className="w-3.5 h-3.5" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setStellariumUrl(s.stellariumUrl); setIframeKey((k) => k + 1); }} title="عرض في الخريطة"><ExternalLink className="w-3.5 h-3.5" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(s.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
