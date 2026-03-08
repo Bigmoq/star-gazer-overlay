@@ -4,6 +4,7 @@ import AdminAuth from "@/components/AdminAuth";
 import RegisterDrawer from "@/components/RegisterDrawer";
 import StarsListPanel from "@/components/StarsListPanel";
 import EditStarDialog from "@/components/EditStarDialog";
+import IframeMask from "@/components/IframeMask";
 import { Star, List, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAllStars, deleteStar, type StarRecord } from "@/lib/starStore";
@@ -69,9 +70,14 @@ const Admin = () => {
         key={iframeKey}
         src={stellariumUrl}
         title="Stellarium Web"
-        className="absolute inset-0 w-full h-full border-none"
+        className="absolute border-none"
+        style={{
+          top: -50, left: -300, right: -20, bottom: 0,
+          width: "calc(100% + 320px)", height: "calc(100% + 50px)",
+        }}
         allow="fullscreen"
       />
+      <IframeMask />
 
       {/* Top bar - floating */}
       <div className="absolute top-0 left-0 right-0 z-20 pointer-events-none">
