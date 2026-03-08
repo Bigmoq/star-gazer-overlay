@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { addStar, getAllStars, deleteStar, type StarRecord } from "@/lib/starStore";
 import { extractStarIdFromUrl, fetchStarData } from "@/lib/stellariumParser";
+import { seedDemoStars } from "@/lib/seedDemo";
 import { toast } from "@/hooks/use-toast";
 import EditStarDialog from "@/components/EditStarDialog";
 
