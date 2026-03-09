@@ -81,14 +81,10 @@ const StarView = () => {
         key={iframeKey}
         src={star.stellariumUrl}
         title="Stellarium Web - Star View"
-        className="absolute border-none"
-        style={{
-          top: -50, left: 0, right: 0, bottom: 0,
-          width: "100%", height: "calc(100% + 50px)",
-        }}
+        className="absolute inset-0 border-none w-full h-full"
         allow="fullscreen"
       />
-      <IframeMask />
+      {/* <IframeMask /> */}
       <AnimatePresence>
         {!introDone && (
           <StarIntro name={star.customName} message={star.message} date={star.date} onComplete={() => setIntroDone(true)} />
