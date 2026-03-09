@@ -3,8 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { findByCode, type StarRecord } from "@/lib/starStore";
 import StarInfoPanel from "@/components/StarInfoPanel";
 import StarIntro from "@/components/StarIntro";
-import StarMarker from "@/components/StarMarker";
-import IframeMask from "@/components/IframeMask";
+import StarCanvas from "@/components/StarCanvas";
 import StarMessage from "@/components/StarMessage";
 import { ArrowRight, LocateFixed, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,9 +16,7 @@ const StarView = () => {
   const [loading, setLoading] = useState(true);
   const [introDone, setIntroDone] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
-  const [showMarker, setShowMarker] = useState(true);
   const [mapReady, setMapReady] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     if (!code) { setLoading(false); return; }
@@ -34,17 +31,9 @@ const StarView = () => {
     });
   }, [code]);
 
-  const handleIframeLoad = useCallback(() => {
-    // Give iframe a moment to render after load event
-    setTimeout(() => setMapReady(true), 1500);
+  const handleCanvasReady = useCallback(() => {
+    setMapReady(true);
   }, []);
-
-  const handleBlur = useCallback(() => { setShowMarker(false); }, []);
-
-  useEffect(() => {
-    window.addEventListener("blur", handleBlur);
-    return () => window.removeEventListener("blur", handleBlur);
-  }, [handleBlur]);
 
   if (loading) {
     return (
@@ -79,25 +68,17 @@ const StarView = () => {
 
   const recenterStar = () => {
     setIframeKey((k) => k + 1);
-    setShowMarker(true);
   };
 
   return (
     <div className="relative w-screen h-[100dvh] overflow-hidden bg-background">
-      <iframe
-        ref={iframeRef}
+      <StarCanvas
         key={iframeKey}
-        src={star.stellariumUrl}
-        title="Stellarium Web - Star View"
-        className="absolute border-none"
-        style={{
-          top: -50, left: -300, right: -20, bottom: 0,
-          width: "calc(100% + 320px)", height: "calc(100% + 50px)",
-        }}
-        allow="fullscreen"
-        onLoad={handleIframeLoad}
+        starName={star.customName}
+        spectralClass={star.spectralClass}
+        magnitude={star.magnitude}
+        onReady={handleCanvasReady}
       />
-      <IframeMask />
       <AnimatePresence>
         {!introDone && (
           <StarIntro 
@@ -155,9 +136,6 @@ const StarView = () => {
               </div>
             </motion.div>
 
-            <AnimatePresence>
-              {showMarker && <StarMarker name={star.customName} visible={showMarker} />}
-            </AnimatePresence>
             <StarInfoPanel star={panelData} />
             <StarMessage message={star.message} date={star.date} />
           </>
