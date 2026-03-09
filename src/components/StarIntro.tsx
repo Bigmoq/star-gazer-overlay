@@ -1,17 +1,40 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Heart, CalendarDays } from "lucide-react";
+import { Heart, CalendarDays, Sparkles } from "lucide-react";
 
 interface StarIntroProps {
   name: string;
   message: string;
   date: string;
   onComplete: () => void;
+  isMapReady?: boolean;
 }
 
-const StarIntro = ({ name, message, date, onComplete }: StarIntroProps) => {
+const StarIntro = ({ name, message, date, onComplete, isMapReady = false }: StarIntroProps) => {
+  const [minTimePassed, setMinTimePassed] = useState(false);
+  const [canProceed, setCanProceed] = useState(false);
+
+  // Minimum display time for intro (5 seconds)
   useEffect(() => {
-    const timer = setTimeout(onComplete, 7000);
+    const timer = setTimeout(() => setMinTimePassed(true), 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Auto-proceed when both conditions are met
+  useEffect(() => {
+    if (minTimePassed && isMapReady) {
+      setCanProceed(true);
+      const timer = setTimeout(onComplete, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [minTimePassed, isMapReady, onComplete]);
+
+  // Fallback: proceed after 10 seconds regardless
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCanProceed(true);
+      onComplete();
+    }, 10000);
     return () => clearTimeout(timer);
   }, [onComplete]);
 
@@ -116,17 +139,35 @@ const StarIntro = ({ name, message, date, onComplete }: StarIntroProps) => {
           <span className="text-sm font-body">{date}</span>
         </motion.div>
 
-        {/* Skip hint */}
-        <motion.button
+        {/* Loading indicator / Skip button */}
+        <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: 0.5 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: 4 }}
-          whileHover={{ opacity: 1 }}
-          onClick={onComplete}
-          className="mt-10 text-xs font-body text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          className="mt-10 flex flex-col items-center gap-3"
         >
-          اضغط لعرض النجم في السماء ←
-        </motion.button>
+          {!canProceed ? (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              >
+                <Sparkles className="w-4 h-4 text-star-glow" />
+              </motion.div>
+              <span className="text-xs font-body">جاري تحضير السماء...</span>
+            </div>
+          ) : (
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.7 }}
+              whileHover={{ opacity: 1 }}
+              onClick={onComplete}
+              className="text-xs font-body text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              اضغط لعرض النجم في السماء ←
+            </motion.button>
+          )}
+        </motion.div>
       </div>
     </motion.div>
   );
