@@ -22,7 +22,7 @@ const StarMarker = ({ name, visible }: StarMarkerProps) => {
       }}
     >
       {/* Crosshair lines */}
-      <div className="relative w-[28px] h-[28px] mb-1">
+      <div className="relative w-6 h-6 sm:w-7 sm:h-7 mb-1">
         {/* Horizontal line */}
         <div
           className="absolute top-1/2 left-0 w-full h-[1px]"
@@ -39,7 +39,7 @@ const StarMarker = ({ name, visible }: StarMarkerProps) => {
         />
         {/* Center dot */}
         <div
-          className="absolute top-1/2 left-1/2 w-[5px] h-[5px] rounded-full -translate-x-1/2 -translate-y-1/2"
+          className="absolute top-1/2 left-1/2 w-1 h-1 sm:w-[5px] sm:h-[5px] rounded-full -translate-x-1/2 -translate-y-1/2"
           style={{
             background: "hsl(var(--foreground))",
             boxShadow: "0 0 6px 2px hsl(var(--foreground) / 0.5)",
@@ -48,7 +48,7 @@ const StarMarker = ({ name, visible }: StarMarkerProps) => {
       </div>
       {/* Star name label */}
       <span
-        className="text-[14px] font-display font-semibold text-foreground whitespace-nowrap tracking-wide"
+        className="text-xs sm:text-sm font-display font-semibold text-foreground whitespace-nowrap tracking-wide"
         style={{
           textShadow:
             "0 0 8px hsl(220 20% 4%), 0 0 16px hsl(220 20% 4%), 0 0 32px hsl(220 20% 4%), 0 0 48px hsl(220 20% 4%)",
