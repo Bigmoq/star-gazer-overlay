@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { findByCode, type StarRecord } from "@/lib/starStore";
 import StarInfoPanel from "@/components/StarInfoPanel";
