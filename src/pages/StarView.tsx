@@ -95,11 +95,18 @@ const StarView = () => {
           width: "calc(100% + 320px)", height: "calc(100% + 50px)",
         }}
         allow="fullscreen"
+        onLoad={handleIframeLoad}
       />
       <IframeMask />
       <AnimatePresence>
         {!introDone && (
-          <StarIntro name={star.customName} message={star.message} date={star.date} onComplete={() => setIntroDone(true)} />
+          <StarIntro 
+            name={star.customName} 
+            message={star.message} 
+            date={star.date} 
+            onComplete={() => setIntroDone(true)}
+            isMapReady={mapReady}
+          />
         )}
       </AnimatePresence>
       <AnimatePresence>
