@@ -31,17 +31,9 @@ const StarView = () => {
     });
   }, [code]);
 
-  const handleIframeLoad = useCallback(() => {
-    // Give iframe a moment to render after load event
-    setTimeout(() => setMapReady(true), 1500);
+  const handleCanvasReady = useCallback(() => {
+    setMapReady(true);
   }, []);
-
-  const handleBlur = useCallback(() => { setShowMarker(false); }, []);
-
-  useEffect(() => {
-    window.addEventListener("blur", handleBlur);
-    return () => window.removeEventListener("blur", handleBlur);
-  }, [handleBlur]);
 
   if (loading) {
     return (
