@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { findByCode, type StarRecord } from "@/lib/starStore";
 import StarInfoPanel from "@/components/StarInfoPanel";
@@ -33,7 +33,12 @@ const StarView = () => {
     });
   }, [code]);
 
-  // Marker stays visible permanently - no blur handler
+  const handleBlur = useCallback(() => { setShowMarker(false); }, []);
+
+  useEffect(() => {
+    window.addEventListener("blur", handleBlur);
+    return () => window.removeEventListener("blur", handleBlur);
+  }, [handleBlur]);
 
   if (loading) {
     return (
