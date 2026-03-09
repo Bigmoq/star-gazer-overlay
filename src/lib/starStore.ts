@@ -47,7 +47,60 @@ function rowToStar(row: DbRow): StarRecord {
   };
 }
 
+// Demo data for immediate functionality
+const demoStars: StarRecord[] = [
+  {
+    id: "1",
+    code: "SAO1818",
+    customName: "ساره",
+    originalName: "SAO 1818 (BD+82 324)",
+    message: "نجمة مميزة لشخص مميز ✨ كل ما أنظر للسماء أتذكرك",
+    date: "2024-12-25",
+    magnitude: 10.37,
+    distance: "617 سنة ضوئية",
+    spectralClass: "F0",
+    constellation: "Draco",
+    stellariumUrl: "https://stellarium-web.org/skysource/SAO1818?fov=0.5",
+    createdAt: "2024-12-25T00:00:00Z",
+  },
+  {
+    id: "2",
+    code: "HIP11767",
+    customName: "عبدالله",
+    originalName: "Polaris (Alpha Ursae Minoris)",
+    message: "مثل نجم القطب، أنت دليلي في كل طريق 🌟",
+    date: "2025-01-15",
+    magnitude: 1.98,
+    distance: "433 سنة ضوئية",
+    spectralClass: "F7Ib",
+    constellation: "Ursa Minor",
+    stellariumUrl: "https://stellarium-web.org/skysource/HIP11767?fov=0.5",
+    createdAt: "2025-01-15T00:00:00Z",
+  },
+  {
+    id: "3",
+    code: "HIP69673",
+    customName: "لمى",
+    originalName: "Arcturus (Alpha Boötis)",
+    message: "أسطع نجوم السماء لأغلى إنسانة 💫",
+    date: "2025-03-01",
+    magnitude: -0.05,
+    distance: "36.7 سنة ضوئية",
+    spectralClass: "K1.5IIIFe",
+    constellation: "Boötes",
+    stellariumUrl: "https://stellarium-web.org/skysource/HIP69673?fov=0.5",
+    createdAt: "2025-03-01T00:00:00Z",
+  },
+];
+
 export async function findByCode(code: string): Promise<StarRecord | undefined> {
+  // First try demo data
+  const demoStar = demoStars.find(star => star.code.toLowerCase() === code.toLowerCase());
+  if (demoStar) {
+    return demoStar;
+  }
+
+  // Fallback to database
   const { data, error } = await supabase
     .from("star_registry")
     .select("*")
