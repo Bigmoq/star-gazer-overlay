@@ -68,7 +68,6 @@ const StarView = () => {
 
   const recenterStar = () => {
     setIframeKey((k) => k + 1);
-    setShowMarker(true);
   };
 
   return (
