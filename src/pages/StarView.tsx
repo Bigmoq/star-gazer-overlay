@@ -24,9 +24,7 @@ const StarView = () => {
     if (!code) { setLoading(false); return; }
     findByCode(decodeURIComponent(code)).then((data) => {
       if (data) {
-        const url = data.stellariumUrl.includes('fov=')
-          ? data.stellariumUrl
-          : data.stellariumUrl + (data.stellariumUrl.includes('?') ? '&' : '?') + 'fov=0.5';
+        const url = data.stellariumUrl;
         setStar({ ...data, stellariumUrl: url });
       }
       setLoading(false);
