@@ -1,11 +1,11 @@
 const IframeMask = () => {
   return (
     <>
-      {/* Top edge - hide Stellarium top bar */}
+      {/* Top edge - smooth fade for any remnants */}
       <div
         className="absolute left-0 right-0 top-0 z-[5]"
         style={{
-          height: 8,
+          height: 6,
           background: "linear-gradient(to bottom, hsl(220 20% 4%), transparent)",
           pointerEvents: "none",
         }}
