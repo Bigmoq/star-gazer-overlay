@@ -16,9 +16,7 @@ const StarView = () => {
   const [loading, setLoading] = useState(true);
   const [introDone, setIntroDone] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
-  const [showMarker, setShowMarker] = useState(true);
   const [mapReady, setMapReady] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     if (!code) { setLoading(false); return; }
