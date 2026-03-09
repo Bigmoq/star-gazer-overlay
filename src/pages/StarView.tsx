@@ -72,20 +72,13 @@ const StarView = () => {
 
   return (
     <div className="relative w-screen h-[100dvh] overflow-hidden bg-background">
-      <iframe
-        ref={iframeRef}
+      <StarCanvas
         key={iframeKey}
-        src={star.stellariumUrl}
-        title="Stellarium Web - Star View"
-        className="absolute border-none"
-        style={{
-          top: -50, left: -300, right: -20, bottom: 0,
-          width: "calc(100% + 320px)", height: "calc(100% + 50px)",
-        }}
-        allow="fullscreen"
-        onLoad={handleIframeLoad}
+        starName={star.customName}
+        spectralClass={star.spectralClass}
+        magnitude={star.magnitude}
+        onReady={handleCanvasReady}
       />
-      <IframeMask />
       <AnimatePresence>
         {!introDone && (
           <StarIntro 
