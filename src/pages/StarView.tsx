@@ -83,7 +83,7 @@ const StarView = () => {
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-background">
+    <div className="relative w-screen h-[100dvh] overflow-hidden bg-background">
       <iframe
         ref={iframeRef}
         key={iframeKey}
@@ -112,19 +112,49 @@ const StarView = () => {
       <AnimatePresence>
         {introDone && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 0.3 }} className="absolute top-4 right-4 z-20 flex gap-2">
-              <Button variant="ghost" size="sm" onClick={recenterStar} className="glass-panel border-glass-border/40 text-foreground hover:bg-secondary/60" title="العودة للنجم">
-                <LocateFixed className="w-4 h-4 ml-1" /> تحديد النجم
+            {/* Top buttons - responsive sizing */}
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              transition={{ duration: 0.8, delay: 0.3 }} 
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 flex gap-1.5 sm:gap-2"
+            >
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={recenterStar} 
+                className="glass-panel border-glass-border/40 text-foreground hover:bg-secondary/60 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3" 
+                title="العودة للنجم"
+              >
+                <LocateFixed className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1" />
+                <span className="hidden xs:inline">تحديد النجم</span>
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="glass-panel border-glass-border/40 text-foreground hover:bg-secondary/60">
-                <ArrowRight className="w-4 h-4 ml-1" /> رجوع
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate("/")} 
+                className="glass-panel border-glass-border/40 text-foreground hover:bg-secondary/60 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3"
+              >
+                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1" />
+                <span className="hidden xs:inline">رجوع</span>
               </Button>
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: [0, 0.7, 0.7, 0] }} transition={{ duration: 6, times: [0, 0.1, 0.6, 1] }} className="absolute top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-              <div className="px-4 py-2 rounded-full text-sm font-body text-foreground/80" style={{ background: "hsl(var(--background) / 0.6)", backdropFilter: "blur(8px)" }}>
+
+            {/* Hint toast - responsive */}
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }} 
+              animate={{ opacity: [0, 0.7, 0.7, 0] }} 
+              transition={{ duration: 6, times: [0, 0.1, 0.6, 1] }} 
+              className="absolute top-14 sm:top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none w-[90%] sm:w-auto"
+            >
+              <div 
+                className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-body text-foreground/80 text-center" 
+                style={{ background: "hsl(var(--background) / 0.6)", backdropFilter: "blur(8px)" }}
+              >
                 استخدم الأيقونات في الأسفل لتغيير عرض السماء 🔭
               </div>
             </motion.div>
+
             <AnimatePresence>
               {showMarker && <StarMarker name={star.customName} visible={showMarker} />}
             </AnimatePresence>
