@@ -17,8 +17,8 @@ const StarMarker = ({ name, visible }: StarMarkerProps) => {
       className="absolute z-10 pointer-events-none select-none flex flex-col items-center"
       style={{
         left: "calc(50% - 140px)",
-        top: "calc(50% - 25px)",
-        transform: "translate(-50%, -50%)",
+        top: "calc(50% - 70px)",
+        transform: "translate(-50%, -100%)",
       }}
     >
       {/* Crosshair lines */}
