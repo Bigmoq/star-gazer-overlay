@@ -85,8 +85,8 @@ const StarView = () => {
         title="Stellarium Web - Star View"
         className="absolute border-none"
         style={{
-          top: -50, left: -300, right: -20, bottom: 0,
-          width: "calc(100% + 320px)", height: "calc(100% + 50px)",
+          top: -50, left: 0, right: 0, bottom: 0,
+          width: "100%", height: "calc(100% + 50px)",
         }}
         allow="fullscreen"
       />
