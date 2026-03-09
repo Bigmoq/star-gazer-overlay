@@ -33,12 +33,7 @@ const StarView = () => {
     });
   }, [code]);
 
-  const handleBlur = useCallback(() => { setShowMarker(false); }, []);
-
-  useEffect(() => {
-    window.addEventListener("blur", handleBlur);
-    return () => window.removeEventListener("blur", handleBlur);
-  }, [handleBlur]);
+  // Marker stays visible permanently - no blur handler
 
   if (loading) {
     return (
