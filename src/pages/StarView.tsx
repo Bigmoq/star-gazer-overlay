@@ -84,7 +84,7 @@ const StarView = () => {
         className="absolute inset-0 border-none w-full h-full"
         allow="fullscreen"
       />
-      <IframeMask />
+      {/* <IframeMask /> */}
       <AnimatePresence>
         {!introDone && (
           <StarIntro name={star.customName} message={star.message} date={star.date} onComplete={() => setIntroDone(true)} />
