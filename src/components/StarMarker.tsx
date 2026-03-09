@@ -23,21 +23,18 @@ const StarMarker = ({ name, visible }: StarMarkerProps) => {
     >
       {/* Crosshair lines */}
       <div className="relative w-[28px] h-[28px] mb-1">
-        {/* Horizontal line */}
         <div
           className="absolute top-1/2 left-0 w-full h-[1px]"
           style={{
             background: "linear-gradient(90deg, transparent, hsl(var(--foreground) / 0.7), transparent)",
           }}
         />
-        {/* Vertical line */}
         <div
           className="absolute left-1/2 top-0 h-full w-[1px]"
           style={{
             background: "linear-gradient(180deg, transparent, hsl(var(--foreground) / 0.7), transparent)",
           }}
         />
-        {/* Center dot */}
         <div
           className="absolute top-1/2 left-1/2 w-[5px] h-[5px] rounded-full -translate-x-1/2 -translate-y-1/2"
           style={{
@@ -46,7 +43,7 @@ const StarMarker = ({ name, visible }: StarMarkerProps) => {
           }}
         />
       </div>
-      {/* Star name label */}
+      {/* Star name label - always visible */}
       <span
         className="text-[14px] font-display font-semibold text-foreground whitespace-nowrap tracking-wide"
         style={{
