@@ -18,6 +18,7 @@ const StarView = () => {
   const [introDone, setIntroDone] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const [showMarker, setShowMarker] = useState(true);
+  const [mapReady, setMapReady] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -32,6 +33,11 @@ const StarView = () => {
       setLoading(false);
     });
   }, [code]);
+
+  const handleIframeLoad = useCallback(() => {
+    // Give iframe a moment to render after load event
+    setTimeout(() => setMapReady(true), 1500);
+  }, []);
 
   const handleBlur = useCallback(() => { setShowMarker(false); }, []);
 
