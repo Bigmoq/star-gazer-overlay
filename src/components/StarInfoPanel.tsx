@@ -22,21 +22,21 @@ const StarInfoPanel = ({ star }: { star: StarData }) => {
         md:bottom-8 md:w-80
         lg:w-80"
     >
-      {/* Header with star name */}
-      <div className="p-4 pb-3 sm:p-5 sm:pb-4">
-        <div className="flex items-center gap-2 mb-1">
+      {/* Header with star name - expanded area */}
+      <div className="p-5 pb-4 sm:p-6 sm:pb-5">
+        <div className="flex items-center gap-2 mb-3 sm:mb-4">
           <div
-            className="w-2 h-2 rounded-full"
+            className="w-2.5 h-2.5 rounded-full"
             style={{
               background: "hsl(var(--star-glow))",
-              boxShadow: "0 0 6px hsl(var(--star-glow) / 0.8)",
+              boxShadow: "0 0 8px hsl(var(--star-glow) / 0.8)",
             }}
           />
-          <span className="text-[10px] font-body uppercase tracking-[0.2em] text-muted-foreground">
+          <span className="text-[10px] sm:text-[11px] font-body uppercase tracking-[0.2em] text-muted-foreground">
             نجم مسمى
           </span>
         </div>
-        <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground leading-tight" dir="rtl">
+        <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground leading-tight" dir="rtl">
           {star.customName}
         </h1>
       </div>
