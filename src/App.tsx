@@ -21,6 +21,7 @@ const App = () => (
           <Route path="/" element={<Search />} />
           <Route path="/star/:code" element={<StarView />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/engine" element={<StellariumNative />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
