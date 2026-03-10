@@ -55,8 +55,8 @@ declare global {
 }
 
 /* ─── Data source base URL ─── */
-// Proxy through Vite dev server to avoid CORS issues
-const DATA_BASE_URL = "/stellarium-data/";
+// Use the official stellarium-web.org skydata path (same as their frontend)
+const DATA_BASE_URL = "https://stellarium-web.org/skydata/";
 
 const StellariumNative = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
