@@ -10,8 +10,8 @@ const StarMessage = ({ message, date }: { message: string; date: string }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut", delay: 1 }}
       className="absolute z-10 glass-panel rounded-2xl overflow-hidden pointer-events-auto
-        bottom-16 left-3 right-3 w-auto
-        sm:bottom-6 sm:right-6 sm:left-auto sm:w-64
+        hidden sm:block
+        sm:bottom-6 sm:right-6 sm:w-64
         md:bottom-8 md:w-72
         lg:w-72"
     >
