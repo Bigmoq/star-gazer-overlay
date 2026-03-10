@@ -158,7 +158,7 @@ const StarView = () => {
             <AnimatePresence>
               {showMarker && <StarMarker name={star.customName} visible={showMarker} />}
             </AnimatePresence>
-            <StarInfoPanel star={panelData} />
+            <StarInfoPanel star={panelData} message={star.message} date={star.date} />
             <StarMessage message={star.message} date={star.date} />
           </>
         )}
