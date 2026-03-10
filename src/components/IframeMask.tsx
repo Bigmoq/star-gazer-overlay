@@ -10,12 +10,12 @@ const IframeMask = () => {
           pointerEvents: "none",
         }}
       />
-      {/* Left edge - hide "he si..." cookie text */}
+      {/* Left edge - hide cookie/copyright text */}
       <div
         className="absolute left-0 top-0 bottom-0 z-[5]"
         style={{
-          width: 40,
-          background: "linear-gradient(to right, hsl(220 20% 4%), transparent)",
+          width: 50,
+          background: "linear-gradient(to right, hsl(220 20% 4%) 60%, transparent)",
           pointerEvents: "none",
         }}
       />
