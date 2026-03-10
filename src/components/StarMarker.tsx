@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 interface StarMarkerProps {
   name: string;
@@ -6,7 +7,16 @@ interface StarMarkerProps {
 }
 
 const StarMarker = ({ name, visible }: StarMarkerProps) => {
-  if (!visible) return null;
+  const [show, setShow] = useState(true);
+
+  // Auto-hide after 5 seconds
+  useEffect(() => {
+    setShow(true);
+    const timer = setTimeout(() => setShow(false), 5000);
+    return () => clearTimeout(timer);
+  }, [visible]);
+
+  if (!visible || !show) return null;
 
   return (
     <motion.div
@@ -17,8 +27,8 @@ const StarMarker = ({ name, visible }: StarMarkerProps) => {
       className="absolute z-10 pointer-events-none select-none flex flex-col items-center"
       style={{
         left: "calc(50% - 140px)",
-        top: "calc(50% - 70px)",
-        transform: "translate(-50%, -100%)",
+        top: "calc(50% - 140px)",
+        transform: "translate(-50%, -50%)",
       }}
     >
       {/* Crosshair lines */}
