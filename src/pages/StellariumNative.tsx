@@ -54,9 +54,9 @@ declare global {
   }
 }
 
-/* ─── Data source base URL ─── */
-// Use the official stellarium-web.org skydata path (same as their frontend)
-const DATA_BASE_URL = "https://stellarium-web.org/skydata/";
+/* ─── Data source base URL (proxied through Supabase Edge Function) ─── */
+const SUPABASE_URL = "https://zhajybiboozrllfiplyz.supabase.co";
+const DATA_BASE_URL = `${SUPABASE_URL}/functions/v1/stellarium-proxy/`;
 
 const StellariumNative = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
