@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Search from "./pages/Search";
 import StarView from "./pages/StarView";
 import Admin from "./pages/Admin";
+import StellariumNative from "./pages/StellariumNative";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
