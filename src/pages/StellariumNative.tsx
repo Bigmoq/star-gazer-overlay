@@ -79,8 +79,8 @@ const StellariumNative = () => {
     setTestResult(null);
     try {
       const { data, error } = await supabase.auth.signUp({
-        email: "test@test.com",
-        password: "123456",
+        email: `testuser${Date.now()}@gmail.com`,
+        password: "Test123456!",
       });
       if (error) {
         setTestResult({ ok: false, msg: error.message });
