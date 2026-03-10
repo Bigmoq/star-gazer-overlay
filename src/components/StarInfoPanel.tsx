@@ -17,8 +17,8 @@ const StarInfoPanel = ({ star }: { star: StarData }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut", delay: 0.5 }}
       className="absolute z-10 glass-panel rounded-2xl overflow-hidden pointer-events-auto
-        bottom-4 left-4 right-4 w-auto
-        sm:bottom-6 sm:left-6 sm:right-auto sm:w-72
+        bottom-16 left-3 right-3 w-auto max-h-[45vh] overflow-y-auto
+        sm:bottom-6 sm:left-6 sm:right-auto sm:w-72 sm:max-h-none
         md:bottom-8 md:w-80
         lg:w-80"
     >
