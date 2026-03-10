@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Compass, Sun, Eye, X, Menu, Sparkles, MapPin, Telescope } from "lucide-react";
+import { Star, Compass, Sun, Eye, X, Menu, Sparkles, MapPin, Layers, Moon, Mountain, Grid3X3, Telescope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /* ─── Custom Arabic Names Database ─── */
@@ -43,181 +43,246 @@ interface SelectedStar {
   name: string;
   arabicName: string;
   description: string;
-  magnitude: number;
+  magnitude: string;
   ra: string;
   dec: string;
-  constellation: string;
 }
 
 declare global {
   interface Window {
     StelWebEngine: any;
-    Module: any;
   }
 }
 
+/* ─── Data source base URL ─── */
+// The official stellarium-web data server
+const DATA_BASE_URL = "https://data.stellarium-web.org/";
+
 const StellariumNative = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const engineRef = useRef<any>(null);
+  const stelRef = useRef<any>(null);
   const [engineLoaded, setEngineLoaded] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [selectedStar, setSelectedStar] = useState<SelectedStar | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [showConstellations, setShowConstellations] = useState(true);
+  const [showAtmosphere, setShowAtmosphere] = useState(true);
+  const [showLandscape, setShowLandscape] = useState(true);
+  const [showGrid, setShowGrid] = useState(false);
 
-  /* ─── Load the Stellarium WASM Engine ─── */
+  /* ─── Load & Initialize the Stellarium WASM Engine ─── */
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Simulate loading progress
-    const progressInterval = setInterval(() => {
-      setLoadingProgress((p) => {
-        if (p >= 90) { clearInterval(progressInterval); return 90; }
-        return p + Math.random() * 15;
-      });
-    }, 200);
+    // Resize canvas to fill screen
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
 
+    // Progress simulation while loading
+    const progressInterval = setInterval(() => {
+      setLoadingProgress((p) => (p >= 85 ? 85 : p + Math.random() * 12));
+    }, 300);
+
+    // Dynamically inject the engine script
     const script = document.createElement("script");
     script.src = "/stellarium-web-engine.js";
     script.async = true;
 
     script.onload = () => {
+      if (typeof window.StelWebEngine !== "function") {
+        clearInterval(progressInterval);
+        setEngineError("لم يتم العثور على دالة StelWebEngine — تأكد من أن الملف مُترجم بشكل صحيح.");
+        return;
+      }
+
       try {
-        // The engine exposes a global StelWebEngine factory
-        const args = {
-          canvas: canvas,
+        window.StelWebEngine({
           wasmFile: "/stellarium-web-engine.wasm",
+          canvas: canvas,
           onReady: (stel: any) => {
-            engineRef.current = stel;
+            stelRef.current = stel;
             clearInterval(progressInterval);
             setLoadingProgress(100);
-            setTimeout(() => setEngineLoaded(true), 400);
-            console.log("✅ Stellarium Web Engine initialized");
 
-            // Try to set up observer and rendering
             try {
-              if (stel.core) {
-                // Set default observer location (Riyadh)
-                stel.core.observer.latitude = 24.7136 * Math.PI / 180;
-                stel.core.observer.longitude = 46.6753 * Math.PI / 180;
+              const core = stel.core;
+
+              // ── Add all data sources (stars, DSOs, skycultures, milkyway, landscapes, planets) ──
+              core.stars.addDataSource({ url: DATA_BASE_URL + "stars" });
+              core.skycultures.addDataSource({
+                url: DATA_BASE_URL + "skycultures/western",
+                key: "western",
+              });
+              core.dsos.addDataSource({ url: DATA_BASE_URL + "dso" });
+              core.landscapes.addDataSource({
+                url: DATA_BASE_URL + "landscapes/guereins",
+                key: "guereins",
+              });
+              core.milkyway.addDataSource({
+                url: DATA_BASE_URL + "surveys/milkyway",
+              });
+              core.planets.addDataSource({
+                url: DATA_BASE_URL + "surveys/sso/moon",
+                key: "moon",
+              });
+              core.planets.addDataSource({
+                url: DATA_BASE_URL + "surveys/sso/sun",
+                key: "sun",
+              });
+              core.planets.addDataSource({
+                url: DATA_BASE_URL + "surveys/sso/moon",
+                key: "default",
+              });
+
+              // Set observer to Riyadh
+              core.observer.latitude = (24.7136 * Math.PI) / 180;
+              core.observer.longitude = (46.6753 * Math.PI) / 180;
+              core.observer.altitude = 612;
+
+              // Enable constellations by default
+              if (core.constellations) {
+                core.constellations.lines_visible = true;
+                core.constellations.labels_visible = true;
               }
+
+              // Listen for selection changes
+              stel.change((obj: any, attr: string) => {
+                if (attr === "selection" && core.selection) {
+                  handleStarSelected(stel, core.selection);
+                }
+              });
+
+              console.log("✅ Stellarium Web Engine initialized with full data sources");
             } catch (e) {
-              console.warn("Could not set observer:", e);
+              console.warn("⚠️ Data source setup error:", e);
             }
+
+            setTimeout(() => setEngineLoaded(true), 500);
           },
           onError: (err: any) => {
             clearInterval(progressInterval);
             console.error("Engine error:", err);
-            setEngineError("تعذّر تحميل محرك النجوم. يرجى تحديث الصفحة.");
+            setEngineError("تعذّر تهيئة محرك النجوم. يرجى تحديث الصفحة.");
           },
-        };
-
-        if (typeof window.StelWebEngine === "function") {
-          window.StelWebEngine(args);
-        } else {
-          // Fallback: try Module pattern (Emscripten)
-          clearInterval(progressInterval);
-          setLoadingProgress(100);
-          setTimeout(() => setEngineLoaded(true), 400);
-          console.log("Engine script loaded (Module pattern)");
-        }
+        });
       } catch (e: any) {
         clearInterval(progressInterval);
-        setEngineError(e.message || "خطأ في تهيئة المحرك");
+        setEngineError(e.message || "خطأ غير متوقع");
       }
     };
 
     script.onerror = () => {
       clearInterval(progressInterval);
-      setEngineError("تعذّر تحميل ملف المحرك stellarium-web-engine.js");
+      setEngineError("تعذّر تحميل ملف stellarium-web-engine.js");
     };
 
     document.body.appendChild(script);
 
     return () => {
       clearInterval(progressInterval);
-      document.body.removeChild(script);
+      window.removeEventListener("resize", resize);
+      if (script.parentNode) script.parentNode.removeChild(script);
     };
   }, []);
 
-  /* ─── Canvas Click → Star Selection ─── */
-  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const stel = engineRef.current;
+  /* ─── Handle star selection from the engine ─── */
+  const handleStarSelected = useCallback((stel: any, obj: any) => {
+    try {
+      const designations = obj.designations?.() || [];
+      let name = designations[0] || obj.name || "Unknown";
+      name = name.replace(/^NAME /, "");
 
-    // Try to get the object at the click position from the engine
-    let starName: string | null = null;
-    let magnitude = 0;
-    let ra = "00h 00m 00s";
-    let dec = "+00° 00' 00\"";
-    let constellation = "—";
+      // Get magnitude
+      const vmag = obj.getInfo?.("vmag");
+      const magStr = vmag !== undefined ? vmag.toFixed(2) : "—";
 
-    if (stel && stel.core) {
+      // Get RA/Dec
+      let raStr = "—";
+      let decStr = "—";
       try {
-        const rect = canvasRef.current!.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const obj = stel.core.getObj?.(x, y) || stel.core.pick?.(x, y);
-        if (obj) {
-          starName = obj.designations?.[0] || obj.name || obj.id;
-          magnitude = obj.vmag ?? obj.magnitude ?? 0;
-          const raVal = obj.ra ?? 0;
-          const decVal = obj.dec ?? 0;
-          ra = formatRA(raVal);
-          dec = formatDec(decVal);
-          constellation = obj.constellation || "—";
+        const obs = stel.core.observer;
+        const radec = obj.getInfo?.("radec");
+        if (radec) {
+          const cirs = stel.convertFrame(obs, "ICRF", "CIRS", radec);
+          const c = stel.c2s(cirs);
+          const ra = stel.anp(c[0]);
+          const dec = stel.anpm(c[1]);
+          const raf = stel.a2tf(ra, 1);
+          const daf = stel.a2af(dec, 1);
+          raStr = `${pad(raf.hours)}h ${pad(raf.minutes)}m ${pad(raf.seconds)}.${raf.fraction}s`;
+          decStr = `${daf.sign}${pad(daf.degrees)}° ${pad(daf.arcminutes)}' ${pad(daf.arcseconds)}.${daf.fraction}"`;
         }
-      } catch (err) {
-        console.warn("Could not pick object from engine:", err);
+      } catch {
+        /* fallback to "—" */
       }
-    }
 
-    // Fallback: demo star selection based on click position
-    if (!starName) {
-      const keys = Object.keys(customNamesDb);
-      const idx = Math.floor((e.clientX / window.innerWidth) * keys.length) % keys.length;
-      starName = keys[idx];
-      magnitude = [(-1.46), (0.42), (1.98), (0.03), (0.77), (0.13), (0.86), (1.09)][idx] ?? 1.0;
-      ra = ["06h 45m 09s", "05h 55m 10s", "02h 31m 49s", "18h 36m 56s", "19h 50m 47s", "05h 14m 32s", "04h 35m 55s", "16h 29m 24s"][idx] ?? "—";
-      dec = ["-16° 42' 58\"", "+07° 24' 25\"", "+89° 15' 51\"", "+38° 47' 01\"", "+08° 52' 06\"", "-08° 12' 06\"", "+16° 30' 33\"", "-26° 25' 55\""][idx] ?? "—";
-      constellation = ["الكلب الأكبر", "الجبّار", "الدب الأصغر", "القيثارة", "العُقاب", "الجبّار", "الثور", "العقرب"][idx] ?? "—";
-    }
-
-    // Check for custom Arabic name
-    const customEntry = customNamesDb[starName];
-    if (customEntry) {
+      // Check for custom Arabic name
+      const custom = customNamesDb[name];
       setSelectedStar({
-        name: starName,
-        arabicName: customEntry.arabic,
-        description: customEntry.description,
-        magnitude,
-        ra,
-        dec,
-        constellation,
+        name,
+        arabicName: custom?.arabic || name,
+        description: custom?.description || "نجم لم يُسمَّ بعد في قاعدة بياناتنا.",
+        magnitude: magStr,
+        ra: raStr,
+        dec: decStr,
       });
       setSidebarOpen(true);
-    } else {
-      setSelectedStar({
-        name: starName,
-        arabicName: starName,
-        description: "نجم لم يُسمَّ بعد في قاعدة بياناتنا.",
-        magnitude,
-        ra,
-        dec,
-        constellation,
-      });
-      setSidebarOpen(true);
+    } catch (e) {
+      console.warn("Error reading star info:", e);
     }
   }, []);
+
+  /* ─── Toggle engine features ─── */
+  const toggleConstellations = useCallback(() => {
+    const core = stelRef.current?.core;
+    if (core?.constellations) {
+      const next = !showConstellations;
+      core.constellations.lines_visible = next;
+      core.constellations.labels_visible = next;
+      setShowConstellations(next);
+    }
+  }, [showConstellations]);
+
+  const toggleAtmosphere = useCallback(() => {
+    const core = stelRef.current?.core;
+    if (core) {
+      const next = !showAtmosphere;
+      core.atmosphere.visible = next;
+      setShowAtmosphere(next);
+    }
+  }, [showAtmosphere]);
+
+  const toggleLandscape = useCallback(() => {
+    const core = stelRef.current?.core;
+    if (core?.landscapes) {
+      const next = !showLandscape;
+      core.landscapes.visible = next;
+      setShowLandscape(next);
+    }
+  }, [showLandscape]);
+
+  const toggleGrid = useCallback(() => {
+    const core = stelRef.current?.core;
+    if (core) {
+      const next = !showGrid;
+      if (core.lines) core.lines.equatorial_grid = next;
+      setShowGrid(next);
+    }
+  }, [showGrid]);
 
   return (
     <div className="relative w-screen h-[100dvh] overflow-hidden bg-background">
       {/* ─── Full-Screen Canvas ─── */}
       <canvas
         ref={canvasRef}
-        id="stellarium-canvas"
-        className="w-full h-full outline-none cursor-crosshair"
-        onClick={handleCanvasClick}
+        id="stel-canvas"
+        className="absolute inset-0 w-full h-full outline-none"
         tabIndex={0}
       />
 
@@ -245,17 +310,12 @@ const StellariumNative = () => {
                   transition={{ duration: 2, repeat: Infinity }}
                 />
               </div>
-
               <div className="text-center space-y-2">
                 <h2 className="text-xl font-display font-bold text-foreground" dir="rtl">
                   جارٍ تحميل محرك النجوم
                 </h2>
-                <p className="text-sm font-body text-muted-foreground" dir="rtl">
-                  Stellarium Web Engine
-                </p>
+                <p className="text-sm font-body text-muted-foreground">Stellarium Web Engine</p>
               </div>
-
-              {/* Progress bar */}
               <div className="w-64 h-1.5 rounded-full overflow-hidden" style={{ background: "hsl(var(--secondary))" }}>
                 <motion.div
                   className="h-full rounded-full"
@@ -265,13 +325,11 @@ const StellariumNative = () => {
                   transition={{ duration: 0.3 }}
                 />
               </div>
-
               {engineError && (
                 <motion.p
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-sm text-destructive font-body text-center max-w-xs"
-                  dir="rtl"
+                  className="text-sm text-destructive font-body text-center max-w-xs" dir="rtl"
                 >
                   {engineError}
                 </motion.p>
@@ -281,38 +339,74 @@ const StellariumNative = () => {
         )}
       </AnimatePresence>
 
-      {/* ─── Toggle Sidebar Button ─── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
-        className="absolute top-4 right-4 z-30"
-      >
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setSidebarOpen((o) => !o)}
-          className="glass-panel border-glass-border/40 text-foreground hover:bg-secondary/60 w-10 h-10"
+      {/* ─── Top Controls ─── */}
+      {engineLoaded && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="absolute top-4 right-4 z-30 flex gap-2"
         >
-          {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </Button>
-      </motion.div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen((o) => !o)}
+            className="glass-panel border-glass-border/40 text-foreground hover:bg-secondary/60 w-10 h-10"
+            title={sidebarOpen ? "إغلاق" : "القائمة"}
+          >
+            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </Button>
+        </motion.div>
+      )}
 
-      {/* ─── Hint Overlay ─── */}
+      {/* ─── Bottom Toolbar ─── */}
+      {engineLoaded && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-2"
+        >
+          <ToolbarButton
+            icon={<Layers className="w-4 h-4" />}
+            label="الأبراج"
+            active={showConstellations}
+            onClick={toggleConstellations}
+          />
+          <ToolbarButton
+            icon={<Sun className="w-4 h-4" />}
+            label="الغلاف الجوي"
+            active={showAtmosphere}
+            onClick={toggleAtmosphere}
+          />
+          <ToolbarButton
+            icon={<Mountain className="w-4 h-4" />}
+            label="المشهد"
+            active={showLandscape}
+            onClick={toggleLandscape}
+          />
+          <ToolbarButton
+            icon={<Grid3X3 className="w-4 h-4" />}
+            label="الشبكة"
+            active={showGrid}
+            onClick={toggleGrid}
+          />
+        </motion.div>
+      )}
+
+      {/* ─── Hint ─── */}
       <AnimatePresence>
         {engineLoaded && !selectedStar && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ delay: 1.5, duration: 0.6 }}
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
+            transition={{ delay: 1.2, duration: 0.6 }}
+            className="absolute top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
           >
             <div className="glass-panel rounded-full px-6 py-3 flex items-center gap-3" dir="rtl">
-              <Compass className="w-5 h-5 text-primary" />
-              <span className="text-sm font-body text-foreground/80">
-                اضغط على أي نجم لعرض اسمه العربي
-              </span>
+              <Telescope className="w-5 h-5 text-primary" />
+              <span className="text-sm font-body text-foreground/80">انقر على أي نجم لعرض معلوماته</span>
             </div>
           </motion.div>
         )}
@@ -332,7 +426,7 @@ const StellariumNative = () => {
               text-foreground shadow-2xl"
             dir="rtl"
           >
-            {/* Close button */}
+            {/* Header */}
             <div className="flex justify-between items-center p-4 sm:p-6 pb-0">
               <div className="flex items-center gap-2">
                 <div
@@ -356,14 +450,14 @@ const StellariumNative = () => {
               </Button>
             </div>
 
-            {/* Star Arabic Name */}
+            {/* Arabic Name */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15, duration: 0.5 }}
               className="px-4 sm:px-6 pt-6"
             >
-              <h1 className="text-3xl sm:text-4xl font-bold star-glow leading-relaxed" style={{ fontFamily: "'Outfit', sans-serif" }}>
+              <h1 className="text-3xl sm:text-4xl font-bold star-glow leading-relaxed font-display">
                 {selectedStar.arabicName}
               </h1>
               <p className="text-sm text-muted-foreground font-body mt-1" dir="ltr">
@@ -384,20 +478,19 @@ const StellariumNative = () => {
               {selectedStar.description}
             </motion.p>
 
-            {/* Star Data */}
+            {/* Data */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.5 }}
               className="px-4 sm:px-6 pt-6 space-y-3 flex-1"
             >
-              <SidebarDataRow icon={<Sparkles className="w-4 h-4" />} label="القدر الظاهري" value={selectedStar.magnitude.toFixed(2)} />
-              <SidebarDataRow icon={<Compass className="w-4 h-4" />} label="المطلع المستقيم" value={selectedStar.ra} isLtr />
-              <SidebarDataRow icon={<Sun className="w-4 h-4" />} label="الميل" value={selectedStar.dec} isLtr />
-              <SidebarDataRow icon={<MapPin className="w-4 h-4" />} label="الكوكبة" value={selectedStar.constellation} />
+              <SidebarRow icon={<Sparkles className="w-4 h-4" />} label="القدر الظاهري" value={selectedStar.magnitude} />
+              <SidebarRow icon={<Compass className="w-4 h-4" />} label="المطلع المستقيم" value={selectedStar.ra} isLtr />
+              <SidebarRow icon={<Sun className="w-4 h-4" />} label="الميل" value={selectedStar.dec} isLtr />
             </motion.div>
 
-            {/* Footer */}
+            {/* Footer tip */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -407,7 +500,7 @@ const StellariumNative = () => {
               <div className="glass-panel rounded-xl p-4 flex items-center gap-3">
                 <Eye className="w-5 h-5 text-primary flex-shrink-0" />
                 <p className="text-xs font-body text-muted-foreground leading-relaxed">
-                  حرّك الخريطة بالسحب، وقرّب بعجلة الفأرة أو بالقرص على الشاشة
+                  حرّك السماء بالسحب، وقرّب بعجلة الفأرة أو بالقرص على الشاشة
                 </p>
               </div>
             </motion.div>
@@ -418,8 +511,32 @@ const StellariumNative = () => {
   );
 };
 
-/* ─── Helper: Data Row ─── */
-const SidebarDataRow = ({
+/* ─── Toolbar Button ─── */
+const ToolbarButton = ({
+  icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) => (
+  <button
+    onClick={onClick}
+    className={`glass-panel rounded-xl px-3 py-2.5 flex flex-col items-center gap-1 transition-all duration-200 min-w-[60px] ${
+      active ? "text-primary border-primary/30" : "text-muted-foreground opacity-60"
+    }`}
+    title={label}
+  >
+    {icon}
+    <span className="text-[9px] font-body hidden sm:block">{label}</span>
+  </button>
+);
+
+/* ─── Sidebar Data Row ─── */
+const SidebarRow = ({
   icon,
   label,
   value,
@@ -435,30 +552,15 @@ const SidebarDataRow = ({
       {icon}
       <span className="text-xs font-body">{label}</span>
     </div>
-    <span className={`text-xs font-body font-medium text-foreground ${isLtr ? "direction-ltr" : ""}`} dir={isLtr ? "ltr" : "rtl"}>
+    <span className="text-xs font-body font-medium text-foreground" dir={isLtr ? "ltr" : "rtl"}>
       {value}
     </span>
   </div>
 );
 
-/* ─── Helper: Format RA ─── */
-function formatRA(radians: number): string {
-  const hours = (radians * 12) / Math.PI;
-  const h = Math.floor(hours);
-  const m = Math.floor((hours - h) * 60);
-  const s = ((hours - h - m / 60) * 3600).toFixed(1);
-  return `${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m ${s}s`;
-}
-
-/* ─── Helper: Format Dec ─── */
-function formatDec(radians: number): string {
-  const degrees = (radians * 180) / Math.PI;
-  const sign = degrees >= 0 ? "+" : "-";
-  const abs = Math.abs(degrees);
-  const d = Math.floor(abs);
-  const m = Math.floor((abs - d) * 60);
-  const s = ((abs - d - m / 60) * 3600).toFixed(0);
-  return `${sign}${String(d).padStart(2, "0")}° ${String(m).padStart(2, "0")}' ${s}"`;
+/* ─── Helpers ─── */
+function pad(n: number, len = 2): string {
+  return String(n).padStart(len, "0");
 }
 
 export default StellariumNative;
