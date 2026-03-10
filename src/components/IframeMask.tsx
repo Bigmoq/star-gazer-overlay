@@ -1,12 +1,21 @@
 const IframeMask = () => {
   return (
     <>
-      {/* Left edge - hide "he si..." cookie text */}
+      {/* Top mask - hide Stellarium's native info panel */}
+      <div
+        className="absolute left-0 right-0 top-0 z-[5]"
+        style={{
+          height: 340,
+          background: "linear-gradient(to bottom, hsl(220 20% 4%) 60%, transparent)",
+          pointerEvents: "none",
+        }}
+      />
+      {/* Left edge - hide cookie/copyright text */}
       <div
         className="absolute left-0 top-0 bottom-0 z-[5]"
         style={{
-          width: 24,
-          background: "linear-gradient(to right, hsl(220 20% 4%), transparent)",
+          width: 50,
+          background: "linear-gradient(to right, hsl(220 20% 4%) 60%, transparent)",
           pointerEvents: "none",
         }}
       />
@@ -14,28 +23,17 @@ const IframeMask = () => {
       <div
         className="absolute right-0 top-0 bottom-0 z-[5]"
         style={{
-          width: 16,
+          width: 24,
           background: "linear-gradient(to left, hsl(220 20% 4%), transparent)",
           pointerEvents: "none",
         }}
       />
-      {/* Bottom-right - hide date/time display */}
+      {/* Bottom strip - hide toolbar and date/time */}
       <div
-        className="absolute right-0 bottom-0 z-[5]"
+        className="absolute left-0 right-0 bottom-0 z-[5]"
         style={{
-          width: 180,
-          height: 30,
-          background: "linear-gradient(to top left, hsl(220 20% 4%) 60%, transparent)",
-          pointerEvents: "none",
-        }}
-      />
-      {/* Bottom-left - hide any text remnants */}
-      <div
-        className="absolute left-0 bottom-0 z-[5]"
-        style={{
-          width: 40,
-          height: 30,
-          background: "linear-gradient(to top right, hsl(220 20% 4%) 40%, transparent)",
+          height: 60,
+          background: "linear-gradient(to top, hsl(220 20% 4%) 50%, transparent)",
           pointerEvents: "none",
         }}
       />
