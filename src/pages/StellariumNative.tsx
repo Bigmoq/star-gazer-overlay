@@ -71,6 +71,27 @@ const StellariumNative = () => {
   const [showAtmosphere, setShowAtmosphere] = useState(true);
   const [showLandscape, setShowLandscape] = useState(true);
   const [showGrid, setShowGrid] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [testLoading, setTestLoading] = useState(false);
+
+  const handleTestSignup = async () => {
+    setTestLoading(true);
+    setTestResult(null);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: "test@test.com",
+        password: "123456",
+      });
+      if (error) {
+        setTestResult({ ok: false, msg: error.message });
+      } else {
+        setTestResult({ ok: true, msg: `تم بنجاح! User ID: ${data.user?.id ?? "—"}` });
+      }
+    } catch (e: any) {
+      setTestResult({ ok: false, msg: e.message });
+    }
+    setTestLoading(false);
+  };
 
   /* ─── Load & Initialize the Stellarium WASM Engine ─── */
   useEffect(() => {
