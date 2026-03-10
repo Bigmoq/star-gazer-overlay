@@ -11,6 +11,13 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
+    proxy: {
+      "/stellarium-data": {
+        target: "https://data.stellarium-web.org",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/stellarium-data/, ""),
+      },
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

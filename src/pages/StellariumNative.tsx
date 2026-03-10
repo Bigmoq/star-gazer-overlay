@@ -55,8 +55,8 @@ declare global {
 }
 
 /* ─── Data source base URL ─── */
-// The official stellarium-web data server
-const DATA_BASE_URL = "https://data.stellarium-web.org/";
+// Proxy through Vite dev server to avoid CORS issues
+const DATA_BASE_URL = "/stellarium-data/";
 
 const StellariumNative = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
