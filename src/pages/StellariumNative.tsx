@@ -120,12 +120,12 @@ const StellariumNative = () => {
               const core = stel.core;
 
               // ── Add all data sources (stars, DSOs, skycultures, milkyway, landscapes, planets) ──
-              core.stars.addDataSource({ url: DATA_BASE_URL + "stars" });
+              core.stars.addDataSource({ url: DATA_BASE_URL + "surveys/stars" });
               core.skycultures.addDataSource({
                 url: DATA_BASE_URL + "skycultures/western",
                 key: "western",
               });
-              core.dsos.addDataSource({ url: DATA_BASE_URL + "dso" });
+              core.dsos.addDataSource({ url: DATA_BASE_URL + "surveys/dso" });
               core.landscapes.addDataSource({
                 url: DATA_BASE_URL + "landscapes/guereins",
                 key: "guereins",
