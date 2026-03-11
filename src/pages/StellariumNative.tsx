@@ -203,7 +203,7 @@ const StellariumNative = () => {
                 core.milkyway.visible = true;
               }
               if (core.landscapes) {
-                core.landscapes.visible = false;
+                core.landscapes.visible = true;
               }
 
               // Listen for selection changes
