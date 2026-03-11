@@ -68,8 +68,8 @@ const StellariumNative = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showConstellations, setShowConstellations] = useState(true);
-  const [showAtmosphere, setShowAtmosphere] = useState(true);
-  const [showLandscape, setShowLandscape] = useState(true);
+  const [showAtmosphere, setShowAtmosphere] = useState(false);
+  const [showLandscape, setShowLandscape] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
   const [timeHour, setTimeHour] = useState(22); // 0-24 range, default 10 PM
   const [showTimeSlider, setShowTimeSlider] = useState(false);
