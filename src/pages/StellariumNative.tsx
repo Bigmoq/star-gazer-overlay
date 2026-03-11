@@ -69,7 +69,7 @@ const StellariumNative = () => {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showConstellations, setShowConstellations] = useState(true);
   const [showAtmosphere, setShowAtmosphere] = useState(false);
-  const [showLandscape, setShowLandscape] = useState(false);
+  const [showLandscape, setShowLandscape] = useState(true);
   const [showGrid, setShowGrid] = useState(false);
   const [timeHour, setTimeHour] = useState(22); // 0-24 range, default 10 PM
   const [showTimeSlider, setShowTimeSlider] = useState(false);
@@ -203,7 +203,7 @@ const StellariumNative = () => {
                 core.milkyway.visible = true;
               }
               if (core.landscapes) {
-                core.landscapes.visible = false;
+                core.landscapes.visible = true;
               }
 
               // Listen for selection changes
