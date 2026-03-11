@@ -209,22 +209,41 @@ const StellariumNative = () => {
                 try { core.landscapes.current_id = "guereins"; } catch {}
               }
 
+              // ── Force High-DPI rendering ──
+              try {
+                const dpr = window.devicePixelRatio || 1;
+                core.screen_pixel_scale = dpr;
+                console.log("🖥️ Set screen_pixel_scale to", dpr);
+              } catch (e) {
+                console.warn("⚠️ screen_pixel_scale not supported:", e);
+              }
+
               // ── Star rendering tweaks ──
               try {
-                // Increase star sizes for richer sky
-                core.star_linear_scale = 1.4;
-                core.star_relative_scale = 1.6;
-                core.star_scale_screen_factor = 1.2;
+                // Aggressively boost star sizes for Retina/HiDPI screens
+                core.star_linear_scale = 2.0;
+                core.star_relative_scale = 2.0;
+                core.star_scale_screen_factor = 1.5;
+                // Deep catalog: raise magnitude limit so faint stars render when zoomed in
+                core.star_limit_mag = 12.0;
                 // Boost Milky Way brightness
-                core.milkyway.intensity = 3.0;
+                core.milkyway.intensity = 2.0;
                 // Set low light pollution (Bortle 1 = darkest sky)
                 core.atmosphere.bortle_index = 1;
-                // Lower limiting magnitude to show fainter stars
-                core.star_limit_mag = 7.5;
                 // DSO hints
                 if (core.dsos) core.dsos.hints_visible = true;
               } catch (e) {
                 console.warn("⚠️ Visual tweaks partially unsupported:", e);
+              }
+
+              // ── Try method-based API (some builds use setters) ──
+              try {
+                if (typeof core.stars?.setRelativeScale === 'function') core.stars.setRelativeScale(2.0);
+                if (typeof core.stars?.setAbsoluteScale === 'function') core.stars.setAbsoluteScale(1.5);
+                if (typeof core.milkyway?.setIntensity === 'function') core.milkyway.setIntensity(1.5);
+                console.log("✅ Method-based star/milkyway scale applied");
+              } catch (e) {
+                console.warn("⚠️ Method-based API not available:", e);
               }
 
               // Listen for selection changes
