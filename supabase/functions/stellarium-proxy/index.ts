@@ -8,7 +8,7 @@ const corsHeaders = {
   "Access-Control-Expose-Headers": "content-range, content-length, content-type",
 };
 
-const UPSTREAM = "https://stellarium-web.org/skydata/";
+const UPSTREAM = "https://stellarium-web.org/";
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
