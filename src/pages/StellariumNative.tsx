@@ -196,7 +196,7 @@ const StellariumNative = () => {
                 core.constellations.lines_visible = true;
                 core.constellations.labels_visible = true;
               }
-              // Disable atmosphere by default so stars are always visible
+              // Disable atmosphere for pitch-black background
               if (core.atmosphere) {
                 core.atmosphere.visible = false;
               }
@@ -205,6 +205,31 @@ const StellariumNative = () => {
               }
               if (core.landscapes) {
                 core.landscapes.visible = true;
+              }
+
+              // ── Breathtaking Sky Settings (verified from C source) ──
+              // Bortle 1 = pristine dark sky, maximum star visibility
+              core.bortle_index = 1;
+              // Boost star sizes so bright stars have visible halos on Retina
+              core.star_linear_scale = 1.6;
+              core.star_relative_scale = 1.5;
+              // Show stars down to very faint magnitudes
+              core.display_limit_mag = 12.0;
+              // Boost exposure for brighter milky way rendering
+              core.exposure_scale = 3.0;
+              // Set wide 120° FOV
+              core.fov = (120 * Math.PI) / 180;
+
+              // ── Add DSS HiPS survey for deep zoom ──
+              try {
+                const dssLayer = stel.createLayer({ id: 'dss', z: 1, visible: true });
+                if (dssLayer && dssLayer.addDataSource) {
+                  dssLayer.addDataSource({
+                    url: 'https://alasky.u-strasbg.fr/DSS/DSSColor/',
+                  });
+                }
+              } catch (e) {
+                console.warn("⚠️ DSS layer not supported in this engine build:", e);
               }
 
               // Listen for selection changes
