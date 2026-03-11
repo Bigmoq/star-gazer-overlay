@@ -68,8 +68,8 @@ const StellariumNative = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showConstellations, setShowConstellations] = useState(true);
-  const [showAtmosphere, setShowAtmosphere] = useState(true);
-  const [showLandscape, setShowLandscape] = useState(true);
+  const [showAtmosphere, setShowAtmosphere] = useState(false);
+  const [showLandscape, setShowLandscape] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
   const [timeHour, setTimeHour] = useState(22); // 0-24 range, default 10 PM
   const [showTimeSlider, setShowTimeSlider] = useState(false);
@@ -151,25 +151,32 @@ const StellariumNative = () => {
               core.observer.longitude = (46.6753 * Math.PI) / 180;
               core.observer.altitude = 612;
 
-              // Set time to 10 PM tonight so stars are visible
-              const tonight = new Date();
-              tonight.setHours(22, 0, 0, 0);
-              const mjd = (tonight.getTime() / 86400000) + 40587;
+              // Set time to 10 PM Riyadh time (UTC+3) = 19:00 UTC
+              // Use UTC directly to avoid browser timezone issues
+              const now = new Date();
+              const utcNight = Date.UTC(
+                now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
+                19, 0, 0 // 19:00 UTC = 22:00 Riyadh (UTC+3)
+              );
+              const mjd = (utcNight / 86400000) + 40587;
               core.observer.utc = mjd;
+
+              console.log("🕐 Setting engine time - MJD:", mjd, "UTC date:", new Date(utcNight).toISOString());
 
               // ── Enable visual layers ──
               if (core.constellations) {
                 core.constellations.lines_visible = true;
                 core.constellations.labels_visible = true;
               }
+              // Disable atmosphere by default so stars are always visible
               if (core.atmosphere) {
-                core.atmosphere.visible = true;
+                core.atmosphere.visible = false;
               }
               if (core.milkyway) {
                 core.milkyway.visible = true;
               }
               if (core.landscapes) {
-                core.landscapes.visible = true;
+                core.landscapes.visible = false;
               }
 
               // Listen for selection changes
@@ -302,11 +309,16 @@ const StellariumNative = () => {
     const hour = value[0];
     setTimeHour(hour);
     if (core) {
-      const d = new Date();
+      const now = new Date();
       const wholeHour = Math.floor(hour);
       const minutes = Math.round((hour - wholeHour) * 60);
-      d.setHours(wholeHour, minutes, 0, 0);
-      const mjd = (d.getTime() / 86400000) + 40587;
+      // Convert Riyadh local hour to UTC (subtract 3 hours for UTC+3)
+      const utcHour = wholeHour - 3;
+      const utcTime = Date.UTC(
+        now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
+        utcHour, minutes, 0
+      );
+      const mjd = (utcTime / 86400000) + 40587;
       core.observer.utc = mjd;
     }
   }, []);
