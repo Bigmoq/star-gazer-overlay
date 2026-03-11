@@ -196,15 +196,35 @@ const StellariumNative = () => {
                 core.constellations.lines_visible = true;
                 core.constellations.labels_visible = true;
               }
-              // Disable atmosphere by default so stars are always visible
+              // Atmosphere on by default for realistic horizon glow
               if (core.atmosphere) {
-                core.atmosphere.visible = false;
+                core.atmosphere.visible = true;
               }
               if (core.milkyway) {
                 core.milkyway.visible = true;
               }
               if (core.landscapes) {
                 core.landscapes.visible = true;
+                // Ensure the landscape is set to loaded key
+                try { core.landscapes.current_id = "guereins"; } catch {}
+              }
+
+              // ── Star rendering tweaks ──
+              try {
+                // Increase star sizes for richer sky
+                core.star_linear_scale = 1.4;
+                core.star_relative_scale = 1.6;
+                core.star_scale_screen_factor = 1.2;
+                // Boost Milky Way brightness
+                core.milkyway.intensity = 3.0;
+                // Set low light pollution (Bortle 1 = darkest sky)
+                core.atmosphere.bortle_index = 1;
+                // Lower limiting magnitude to show fainter stars
+                core.star_limit_mag = 7.5;
+                // DSO hints
+                if (core.dsos) core.dsos.hints_visible = true;
+              } catch (e) {
+                console.warn("⚠️ Visual tweaks partially unsupported:", e);
               }
 
               // Listen for selection changes
