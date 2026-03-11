@@ -2,70 +2,40 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, range, accept-encoding",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Expose-Headers": "content-range, content-length, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, range, accept, accept-encoding",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Expose-Headers": "content-range, content-length, content-type"
 };
 
-const UPSTREAM = "https://stellarium-web.org/";
-
 serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const url = new URL(req.url);
-    // The path after the function name becomes the upstream path
-    // e.g. /stellarium-proxy/stars/... → stars/...
-    const pathMatch = url.pathname.match(/\/stellarium-proxy\/(.*)/);
-    const subPath = pathMatch?.[1] ?? "";
-    const query = url.search || "";
-    const upstream = `${UPSTREAM}${subPath}${query}`;
+    let target = url.searchParams.get('target');
 
-    console.log(`Proxying: ${upstream}`);
-
-    // Forward relevant headers
-    const headers: Record<string, string> = {
-      "User-Agent": "StellariumProxy/1.0",
-    };
-    const range = req.headers.get("range");
-    if (range) headers["Range"] = range;
-    const accept = req.headers.get("accept");
-    if (accept) headers["Accept"] = accept;
-    const acceptEncoding = req.headers.get("accept-encoding");
-    if (acceptEncoding) headers["Accept-Encoding"] = acceptEncoding;
-
-    const resp = await fetch(upstream, { headers });
-
-    if (!resp.ok && resp.status !== 206) {
-      return new Response(`Upstream error: ${resp.status}`, {
-        status: resp.status,
-        headers: corsHeaders,
-      });
+    if (!target) {
+       const pathMatch = url.pathname.match(/\/stellarium-proxy\/(.*)/);
+       const subPath = pathMatch ? pathMatch[1] : "";
+       const query = url.search;
+       target = `https://stellarium-web.org/${subPath}${query}`;
     }
 
-    // Stream the response body
-    const responseHeaders: Record<string, string> = { ...corsHeaders };
-    const ct = resp.headers.get("content-type");
-    if (ct) responseHeaders["Content-Type"] = ct;
-    const cl = resp.headers.get("content-length");
-    if (cl) responseHeaders["Content-Length"] = cl;
-    const cr = resp.headers.get("content-range");
-    if (cr) responseHeaders["Content-Range"] = cr;
-    // Cache for 1 day
-    responseHeaders["Cache-Control"] = "public, max-age=86400";
+    const requestHeaders = new Headers();
+    if (req.headers.has('range')) requestHeaders.set('range', req.headers.get('range')!);
+    if (req.headers.has('accept')) requestHeaders.set('accept', req.headers.get('accept')!);
 
-    return new Response(resp.body, {
-      status: resp.status,
-      headers: responseHeaders,
-    });
+    const resp = await fetch(target, { method: req.method, headers: requestHeaders });
+    const body = await resp.arrayBuffer();
+
+    const responseHeaders = new Headers(corsHeaders);
+    responseHeaders.set('content-type', resp.headers.get('content-type') || 'application/octet-stream');
+    if (resp.headers.has('content-range')) responseHeaders.set('content-range', resp.headers.get('content-range')!);
+    if (resp.headers.has('content-length')) responseHeaders.set('content-length', resp.headers.get('content-length')!);
+    responseHeaders.set('Cache-Control', 'public, max-age=86400');
+
+    return new Response(body, { status: resp.status, headers: responseHeaders });
   } catch (e) {
-    console.error("Proxy error:", e);
-    return new Response(JSON.stringify({ error: e.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
