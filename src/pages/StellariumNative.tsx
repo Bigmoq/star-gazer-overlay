@@ -299,30 +299,6 @@ const StellariumNative = () => {
         tabIndex={0}
       />
 
-      {/* ─── Test Supabase Button ─── */}
-      <div className="absolute bottom-6 left-6 z-50 flex flex-col items-start gap-3">
-        <Button
-          onClick={handleTestSignup}
-          disabled={testLoading}
-          className="gap-2 bg-primary/80 backdrop-blur-md hover:bg-primary"
-        >
-          <UserPlus className="w-4 h-4" />
-          {testLoading ? "جارٍ..." : "تسجيل حساب تجريبي"}
-        </Button>
-        {testResult && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`px-4 py-2 rounded-lg backdrop-blur-md text-sm font-body ${
-              testResult.ok
-                ? "bg-green-500/20 border border-green-400/40 text-green-300"
-                : "bg-destructive/20 border border-destructive/40 text-destructive"
-            }`}
-          >
-            {testResult.msg}
-          </motion.div>
-        )}
-      </div>
 
       {/* ─── Loading Overlay ─── */}
       <AnimatePresence>
