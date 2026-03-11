@@ -220,6 +220,18 @@ const StellariumNative = () => {
             }
 
             setTimeout(() => setEngineLoaded(true), 500);
+
+            // Track FOV changes
+            const fovInterval = setInterval(() => {
+              try {
+                const fovRad = stelRef.current?.core?.fov;
+                if (fovRad !== undefined) {
+                  setFov((fovRad * 180) / Math.PI);
+                }
+              } catch {}
+            }, 300);
+            // Store interval for cleanup
+            (window as any).__fovInterval = fovInterval;
           },
           onError: (err: any) => {
             clearInterval(progressInterval);
