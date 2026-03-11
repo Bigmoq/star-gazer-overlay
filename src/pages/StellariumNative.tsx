@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Compass, Sun, Eye, X, Menu, Sparkles, MapPin, Layers, Moon, Mountain, Grid3X3, Telescope, UserPlus } from "lucide-react";
+import { Star, Compass, Sun, Eye, X, Menu, Sparkles, MapPin, Layers, Moon, Mountain, Grid3X3, Telescope } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabaseClient";
 
 /* ─── Custom Arabic Names Database ─── */
 const customNamesDb: Record<string, { arabic: string; description: string }> = {
@@ -71,27 +70,6 @@ const StellariumNative = () => {
   const [showAtmosphere, setShowAtmosphere] = useState(true);
   const [showLandscape, setShowLandscape] = useState(true);
   const [showGrid, setShowGrid] = useState(false);
-  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
-  const [testLoading, setTestLoading] = useState(false);
-
-  const handleTestSignup = async () => {
-    setTestLoading(true);
-    setTestResult(null);
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: `testuser${Date.now()}@gmail.com`,
-        password: "Test123456!",
-      });
-      if (error) {
-        setTestResult({ ok: false, msg: error.message });
-      } else {
-        setTestResult({ ok: true, msg: `تم بنجاح! User ID: ${data.user?.id ?? "—"}` });
-      }
-    } catch (e: any) {
-      setTestResult({ ok: false, msg: e.message });
-    }
-    setTestLoading(false);
-  };
 
   /* ─── Load & Initialize the Stellarium WASM Engine ─── */
   useEffect(() => {
@@ -100,8 +78,11 @@ const StellariumNative = () => {
 
     // Resize canvas to fill screen
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
     };
     resize();
     window.addEventListener("resize", resize);
@@ -167,10 +148,19 @@ const StellariumNative = () => {
               core.observer.longitude = (46.6753 * Math.PI) / 180;
               core.observer.altitude = 612;
 
-              // Enable constellations by default
+              // ── Enable visual layers ──
               if (core.constellations) {
                 core.constellations.lines_visible = true;
                 core.constellations.labels_visible = true;
+              }
+              if (core.atmosphere) {
+                core.atmosphere.visible = true;
+              }
+              if (core.milkyway) {
+                core.milkyway.visible = true;
+              }
+              if (core.landscapes) {
+                core.landscapes.visible = true;
               }
 
               // Listen for selection changes
@@ -308,30 +298,6 @@ const StellariumNative = () => {
         tabIndex={0}
       />
 
-      {/* ─── Test Supabase Button ─── */}
-      <div className="absolute bottom-6 left-6 z-50 flex flex-col items-start gap-3">
-        <Button
-          onClick={handleTestSignup}
-          disabled={testLoading}
-          className="gap-2 bg-primary/80 backdrop-blur-md hover:bg-primary"
-        >
-          <UserPlus className="w-4 h-4" />
-          {testLoading ? "جارٍ..." : "تسجيل حساب تجريبي"}
-        </Button>
-        {testResult && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`px-4 py-2 rounded-lg backdrop-blur-md text-sm font-body ${
-              testResult.ok
-                ? "bg-green-500/20 border border-green-400/40 text-green-300"
-                : "bg-destructive/20 border border-destructive/40 text-destructive"
-            }`}
-          >
-            {testResult.msg}
-          </motion.div>
-        )}
-      </div>
 
       {/* ─── Loading Overlay ─── */}
       <AnimatePresence>
