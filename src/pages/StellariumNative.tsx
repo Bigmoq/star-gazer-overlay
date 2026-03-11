@@ -54,8 +54,9 @@ declare global {
   }
 }
 
-/* ─── Data source base URL (public CORS proxy) ─── */
-const DATA_BASE_URL = "https://corsproxy.io/?https://data.stellarium-web.org/";
+/* ─── Data source base URL (proxied through Supabase Edge Function) ─── */
+const SUPABASE_URL = "https://zhajybiboozrllfiplyz.supabase.co";
+const DATA_BASE_URL = `${SUPABASE_URL}/functions/v1/stellarium-proxy/`;
 
 const StellariumNative = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
