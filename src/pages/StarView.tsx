@@ -15,7 +15,7 @@ const StarView = () => {
   const navigate = useNavigate();
   const [star, setStar] = useState<StarRecord | null>(null);
   const [loading, setLoading] = useState(true);
-  const [introDone, setIntroDone] = useState(false);
+  const [introDone, setIntroDone] = useState(true);
   const [iframeKey, setIframeKey] = useState(0);
   const [showMarker, setShowMarker] = useState(true);
   const [mapReady, setMapReady] = useState(false);

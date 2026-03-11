@@ -153,10 +153,30 @@ const StellariumNative = () => {
                 key: "sun",
               });
 
-              // Set observer to Riyadh
-              core.observer.latitude = (24.7136 * Math.PI) / 180;
-              core.observer.longitude = (46.6753 * Math.PI) / 180;
-              core.observer.altitude = 612;
+              // Set observer location — try user's GPS, fallback to Riyadh
+              const setDefaultLocation = () => {
+                core.observer.latitude = (24.7136 * Math.PI) / 180;
+                core.observer.longitude = (46.6753 * Math.PI) / 180;
+                core.observer.altitude = 612;
+              };
+
+              if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => {
+                    core.observer.latitude = (pos.coords.latitude * Math.PI) / 180;
+                    core.observer.longitude = (pos.coords.longitude * Math.PI) / 180;
+                    core.observer.altitude = pos.coords.altitude || 0;
+                    console.log("📍 Using user location:", pos.coords.latitude, pos.coords.longitude);
+                  },
+                  () => {
+                    setDefaultLocation();
+                    console.log("📍 Geolocation denied, using Riyadh");
+                  },
+                  { timeout: 5000 }
+                );
+              } else {
+                setDefaultLocation();
+              }
 
               // Set time to 10 PM Riyadh time (UTC+3) = 19:00 UTC
               // Use UTC directly to avoid browser timezone issues
