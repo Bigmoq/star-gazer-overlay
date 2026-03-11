@@ -70,6 +70,7 @@ const StellariumNative = () => {
   const [showAtmosphere, setShowAtmosphere] = useState(true);
   const [showLandscape, setShowLandscape] = useState(true);
   const [showGrid, setShowGrid] = useState(false);
+  const [isNightMode, setIsNightMode] = useState(true);
 
   /* ─── Load & Initialize the Stellarium WASM Engine ─── */
   useEffect(() => {
@@ -294,6 +295,18 @@ const StellariumNative = () => {
     }
   }, [showGrid]);
 
+  const toggleNightMode = useCallback(() => {
+    const core = stelRef.current?.core;
+    if (core) {
+      const next = !isNightMode;
+      const d = new Date();
+      d.setHours(next ? 22 : 12, 0, 0, 0);
+      const mjd = (d.getTime() / 86400000) + 40587;
+      core.observer.utc = mjd;
+      setIsNightMode(next);
+    }
+  }, [isNightMode]);
+
   return (
     <div className="relative w-screen h-[100dvh] overflow-hidden bg-background">
       {/* ─── Full-Screen Canvas ─── */}
@@ -409,6 +422,12 @@ const StellariumNative = () => {
             label="الشبكة"
             active={showGrid}
             onClick={toggleGrid}
+          />
+          <ToolbarButton
+            icon={isNightMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            label={isNightMode ? "ليل" : "نهار"}
+            active={isNightMode}
+            onClick={toggleNightMode}
           />
         </motion.div>
       )}
