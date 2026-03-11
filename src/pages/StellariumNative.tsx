@@ -148,6 +148,12 @@ const StellariumNative = () => {
               core.observer.longitude = (46.6753 * Math.PI) / 180;
               core.observer.altitude = 612;
 
+              // Set time to 10 PM tonight so stars are visible
+              const tonight = new Date();
+              tonight.setHours(22, 0, 0, 0);
+              const mjd = (tonight.getTime() / 86400000) + 40587;
+              core.observer.utc = mjd;
+
               // ── Enable visual layers ──
               if (core.constellations) {
                 core.constellations.lines_visible = true;
