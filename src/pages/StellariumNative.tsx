@@ -68,7 +68,7 @@ const StellariumNative = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showConstellations, setShowConstellations] = useState(true);
-  const [showAtmosphere, setShowAtmosphere] = useState(true);
+  const [showAtmosphere, setShowAtmosphere] = useState(false);
   const [showLandscape, setShowLandscape] = useState(true);
   const [showGrid, setShowGrid] = useState(false);
   const [timeHour, setTimeHour] = useState(22); // 0-24 range, default 10 PM
@@ -196,54 +196,15 @@ const StellariumNative = () => {
                 core.constellations.lines_visible = true;
                 core.constellations.labels_visible = true;
               }
-              // Atmosphere on by default for realistic horizon glow
+              // Disable atmosphere by default so stars are always visible
               if (core.atmosphere) {
-                core.atmosphere.visible = true;
+                core.atmosphere.visible = false;
               }
               if (core.milkyway) {
                 core.milkyway.visible = true;
               }
               if (core.landscapes) {
                 core.landscapes.visible = true;
-                // Ensure the landscape is set to loaded key
-                try { core.landscapes.current_id = "guereins"; } catch {}
-              }
-
-              // ── Visual rendering configuration ──
-              // Property names verified from stellarium-web-engine C source (core.c, stars.c, milkyway.c)
-              try {
-                // Boost star sizes — these are CORE properties (not stars module)
-                core.star_linear_scale = 2.0;
-                core.star_relative_scale = 2.0;
-
-                // Bortle index controls light pollution — on CORE (not atmosphere)
-                // 1 = darkest sky, shows maximum stars & milky way
-                core.bortle_index = 1;
-
-                // Display limit magnitude — controls how faint stars are rendered
-                // Higher = more faint stars visible (default ~6.5, we push to 7.0)
-                core.display_limit_mag = 7.0;
-
-                // Exposure scale — boost overall scene brightness
-                // This directly affects milky way + faint star visibility
-                core.exposure_scale = 2.5;
-
-                // Tonemapper parameter — affects HDR tone mapping curve
-                // Lower values = brighter faint objects, more contrast
-                core.tonemapper_p = 1.5;
-
-                // Stars module: show labels for brighter stars
-                if (core.stars) {
-                  core.stars.hints_visible = true;
-                  core.stars.hints_mag_offset = -1.0; // Show labels for brighter stars
-                }
-
-                // DSO hints
-                if (core.dsos) core.dsos.hints_visible = true;
-
-                console.log("✅ Visual config applied: star_linear_scale=2.0, star_relative_scale=2.0, bortle_index=1, display_limit_mag=7.0, exposure_scale=2.5");
-              } catch (e) {
-                console.warn("⚠️ Visual tweaks partially unsupported:", e);
               }
 
               // Listen for selection changes
