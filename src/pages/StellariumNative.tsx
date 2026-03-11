@@ -209,41 +209,41 @@ const StellariumNative = () => {
                 try { core.landscapes.current_id = "guereins"; } catch {}
               }
 
-              // ── Force High-DPI rendering ──
+              // ── Visual rendering configuration ──
+              // Property names verified from stellarium-web-engine C source (core.c, stars.c, milkyway.c)
               try {
-                const dpr = window.devicePixelRatio || 1;
-                core.screen_pixel_scale = dpr;
-                console.log("🖥️ Set screen_pixel_scale to", dpr);
-              } catch (e) {
-                console.warn("⚠️ screen_pixel_scale not supported:", e);
-              }
-
-              // ── Star rendering tweaks ──
-              try {
-                // Aggressively boost star sizes for Retina/HiDPI screens
+                // Boost star sizes — these are CORE properties (not stars module)
                 core.star_linear_scale = 2.0;
                 core.star_relative_scale = 2.0;
-                core.star_scale_screen_factor = 1.5;
-                // Deep catalog: raise magnitude limit so faint stars render when zoomed in
-                core.star_limit_mag = 12.0;
-                // Boost Milky Way brightness
-                core.milkyway.intensity = 2.0;
-                // Set low light pollution (Bortle 1 = darkest sky)
-                core.atmosphere.bortle_index = 1;
+
+                // Bortle index controls light pollution — on CORE (not atmosphere)
+                // 1 = darkest sky, shows maximum stars & milky way
+                core.bortle_index = 1;
+
+                // Display limit magnitude — controls how faint stars are rendered
+                // Higher = more faint stars visible (default ~6.5, we push to 7.0)
+                core.display_limit_mag = 7.0;
+
+                // Exposure scale — boost overall scene brightness
+                // This directly affects milky way + faint star visibility
+                core.exposure_scale = 2.5;
+
+                // Tonemapper parameter — affects HDR tone mapping curve
+                // Lower values = brighter faint objects, more contrast
+                core.tonemapper_p = 1.5;
+
+                // Stars module: show labels for brighter stars
+                if (core.stars) {
+                  core.stars.hints_visible = true;
+                  core.stars.hints_mag_offset = -1.0; // Show labels for brighter stars
+                }
+
                 // DSO hints
                 if (core.dsos) core.dsos.hints_visible = true;
+
+                console.log("✅ Visual config applied: star_linear_scale=2.0, star_relative_scale=2.0, bortle_index=1, display_limit_mag=7.0, exposure_scale=2.5");
               } catch (e) {
                 console.warn("⚠️ Visual tweaks partially unsupported:", e);
-              }
-
-              // ── Try method-based API (some builds use setters) ──
-              try {
-                if (typeof core.stars?.setRelativeScale === 'function') core.stars.setRelativeScale(2.0);
-                if (typeof core.stars?.setAbsoluteScale === 'function') core.stars.setAbsoluteScale(1.5);
-                if (typeof core.milkyway?.setIntensity === 'function') core.milkyway.setIntensity(1.5);
-                console.log("✅ Method-based star/milkyway scale applied");
-              } catch (e) {
-                console.warn("⚠️ Method-based API not available:", e);
               }
 
               // Listen for selection changes
