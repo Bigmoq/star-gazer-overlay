@@ -70,6 +70,7 @@ const StellariumNative = () => {
   const [showAtmosphere, setShowAtmosphere] = useState(true);
   const [showLandscape, setShowLandscape] = useState(true);
   const [showGrid, setShowGrid] = useState(false);
+  const [isNightMode, setIsNightMode] = useState(true);
 
   /* ─── Load & Initialize the Stellarium WASM Engine ─── */
   useEffect(() => {
