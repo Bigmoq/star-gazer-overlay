@@ -295,6 +295,18 @@ const StellariumNative = () => {
     }
   }, [showGrid]);
 
+  const toggleNightMode = useCallback(() => {
+    const core = stelRef.current?.core;
+    if (core) {
+      const next = !isNightMode;
+      const d = new Date();
+      d.setHours(next ? 22 : 12, 0, 0, 0);
+      const mjd = (d.getTime() / 86400000) + 40587;
+      core.observer.utc = mjd;
+      setIsNightMode(next);
+    }
+  }, [isNightMode]);
+
   return (
     <div className="relative w-screen h-[100dvh] overflow-hidden bg-background">
       {/* ─── Full-Screen Canvas ─── */}
