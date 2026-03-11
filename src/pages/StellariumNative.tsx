@@ -207,30 +207,29 @@ const StellariumNative = () => {
                 core.landscapes.visible = true;
               }
 
-              // ── Breathtaking Sky Settings (verified from C source) ──
-              // Bortle 1 = pristine dark sky, maximum star visibility
+              // ── Breathtaking Sky Settings (verified from C source core.c) ──
+              // Bortle 1 = pristine dark sky, no light pollution
               core.bortle_index = 1;
-              // Boost star sizes so bright stars have visible halos on Retina
-              core.star_linear_scale = 1.6;
-              core.star_relative_scale = 1.5;
-              // Show stars down to very faint magnitudes
+              // Increase star rendering size — bright stars get halos
+              core.star_linear_scale = 1.8;
+              // Boost size difference between bright/faint stars
+              core.star_relative_scale = 1.8;
+              // Show stars down to mag 12
               core.display_limit_mag = 12.0;
-              // Boost exposure for brighter milky way rendering
-              core.exposure_scale = 3.0;
+              // Do NOT touch exposure_scale — default 1.0 preserves
+              // the tonemapper curve so bright stars stay visible
+              // core.exposure_scale = 1.0;  // engine default
               // Set wide 120° FOV
               core.fov = (120 * Math.PI) / 180;
 
-              // ── Add DSS HiPS survey for deep zoom ──
-              try {
-                const dssLayer = stel.createLayer({ id: 'dss', z: 1, visible: true });
-                if (dssLayer && dssLayer.addDataSource) {
-                  dssLayer.addDataSource({
-                    url: 'https://alasky.u-strasbg.fr/DSS/DSSColor/',
-                  });
-                }
-              } catch (e) {
-                console.warn("⚠️ DSS layer not supported in this engine build:", e);
-              }
+              // ── Diagnostic: log star catalog status ──
+              console.log("🌟 Star data source URL:", DATA_BASE_URL + "stars");
+              console.log("🔧 core.star_linear_scale =", core.star_linear_scale);
+              console.log("🔧 core.star_relative_scale =", core.star_relative_scale);
+              console.log("🔧 core.bortle_index =", core.bortle_index);
+              console.log("🔧 core.display_limit_mag =", core.display_limit_mag);
+              console.log("🔧 core.exposure_scale =", core.exposure_scale);
+              console.log("🔧 core.fov (deg) =", (core.fov * 180) / Math.PI);
 
               // Listen for selection changes
               stel.change((obj: any, attr: string) => {
