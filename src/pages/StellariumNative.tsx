@@ -119,31 +119,38 @@ const StellariumNative = () => {
             try {
               const core = stel.core;
 
-              // ── Add all data sources (stars, DSOs, skycultures, milkyway, landscapes, planets) ──
-              core.stars.addDataSource({ url: DATA_BASE_URL + "surveys/stars" });
+              // ── Add all data sources ──
+              // Stars — must be "stars" NOT "surveys/stars" (verified via server logs)
+              core.stars.addDataSource({ url: DATA_BASE_URL + "stars" });
+              
+              // Sky cultures
               core.skycultures.addDataSource({
                 url: DATA_BASE_URL + "skycultures/western",
                 key: "western",
               });
-              core.dsos.addDataSource({ url: DATA_BASE_URL + "surveys/dso" });
+              
+              // Deep sky objects
+              core.dsos.addDataSource({ url: DATA_BASE_URL + "dso" });
+              
+              // Landscape
               core.landscapes.addDataSource({
                 url: DATA_BASE_URL + "landscapes/guereins",
                 key: "guereins",
               });
+              
+              // Milky Way
               core.milkyway.addDataSource({
                 url: DATA_BASE_URL + "surveys/milkyway",
               });
+              
+              // Planets — correct paths are surveys/moon and surveys/sun
               core.planets.addDataSource({
-                url: DATA_BASE_URL + "surveys/sso/moon",
+                url: DATA_BASE_URL + "surveys/moon",
                 key: "moon",
               });
               core.planets.addDataSource({
-                url: DATA_BASE_URL + "surveys/sso/sun",
+                url: DATA_BASE_URL + "surveys/sun",
                 key: "sun",
-              });
-              core.planets.addDataSource({
-                url: DATA_BASE_URL + "surveys/sso/moon",
-                key: "default",
               });
 
               // Set observer to Riyadh
