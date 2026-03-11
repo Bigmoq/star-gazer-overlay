@@ -442,8 +442,14 @@ const StellariumNative = () => {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="absolute top-4 right-4 z-30 flex gap-2"
+          className="absolute top-4 right-4 z-30 flex gap-2 items-center"
         >
+          {fov !== null && (
+            <div className="glass-panel border-glass-border/40 rounded-lg px-3 py-2 text-xs font-mono text-foreground/80 flex items-center gap-1.5">
+              <Telescope className="w-3.5 h-3.5 text-primary" />
+              <span dir="ltr">{fov < 1 ? fov.toFixed(2) : fov.toFixed(1)}°</span>
+            </div>
+          )}
           <Button
             variant="ghost"
             size="icon"
