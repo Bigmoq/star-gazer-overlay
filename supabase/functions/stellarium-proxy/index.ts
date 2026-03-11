@@ -18,7 +18,7 @@ serve(async (req: Request) => {
        const pathMatch = url.pathname.match(/\/stellarium-proxy\/(.*)/);
        const subPath = pathMatch ? pathMatch[1] : "";
        const query = url.search;
-       target = `https://stellarium-web.org/${subPath}${query}`;
+       target = `https://data.stellarium.org/${subPath}${query}`;
     }
 
     const requestHeaders = new Headers();
