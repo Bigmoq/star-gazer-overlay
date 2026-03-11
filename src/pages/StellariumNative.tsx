@@ -149,10 +149,19 @@ const StellariumNative = () => {
               core.observer.longitude = (46.6753 * Math.PI) / 180;
               core.observer.altitude = 612;
 
-              // Enable constellations by default
+              // ── Enable visual layers ──
               if (core.constellations) {
                 core.constellations.lines_visible = true;
                 core.constellations.labels_visible = true;
+              }
+              if (core.atmosphere) {
+                core.atmosphere.visible = true;
+              }
+              if (core.milkyway) {
+                core.milkyway.visible = true;
+              }
+              if (core.landscapes) {
+                core.landscapes.visible = true;
               }
 
               // Listen for selection changes
