@@ -297,17 +297,27 @@ const StellariumNative = () => {
     }
   }, [showGrid]);
 
-  const toggleNightMode = useCallback(() => {
+  const handleTimeChange = useCallback((value: number[]) => {
     const core = stelRef.current?.core;
+    const hour = value[0];
+    setTimeHour(hour);
     if (core) {
-      const next = !isNightMode;
       const d = new Date();
-      d.setHours(next ? 22 : 12, 0, 0, 0);
+      const wholeHour = Math.floor(hour);
+      const minutes = Math.round((hour - wholeHour) * 60);
+      d.setHours(wholeHour, minutes, 0, 0);
       const mjd = (d.getTime() / 86400000) + 40587;
       core.observer.utc = mjd;
-      setIsNightMode(next);
     }
-  }, [isNightMode]);
+  }, []);
+
+  const formatTime = (hour: number) => {
+    const h = Math.floor(hour);
+    const m = Math.round((hour - h) * 60);
+    const period = h >= 12 ? "م" : "ص";
+    const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${displayH}:${String(m).padStart(2, "0")} ${period}`;
+  };
 
   return (
     <div className="relative w-screen h-[100dvh] overflow-hidden bg-background">
