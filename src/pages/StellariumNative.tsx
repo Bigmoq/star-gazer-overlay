@@ -423,6 +423,12 @@ const StellariumNative = () => {
             active={showGrid}
             onClick={toggleGrid}
           />
+          <ToolbarButton
+            icon={isNightMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            label={isNightMode ? "ليل" : "نهار"}
+            active={isNightMode}
+            onClick={toggleNightMode}
+          />
         </motion.div>
       )}
 
