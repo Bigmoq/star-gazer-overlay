@@ -309,11 +309,16 @@ const StellariumNative = () => {
     const hour = value[0];
     setTimeHour(hour);
     if (core) {
-      const d = new Date();
+      const now = new Date();
       const wholeHour = Math.floor(hour);
       const minutes = Math.round((hour - wholeHour) * 60);
-      d.setHours(wholeHour, minutes, 0, 0);
-      const mjd = (d.getTime() / 86400000) + 40587;
+      // Convert Riyadh local hour to UTC (subtract 3 hours for UTC+3)
+      const utcHour = wholeHour - 3;
+      const utcTime = Date.UTC(
+        now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
+        utcHour, minutes, 0
+      );
+      const mjd = (utcTime / 86400000) + 40587;
       core.observer.utc = mjd;
     }
   }, []);
