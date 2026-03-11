@@ -436,13 +436,54 @@ const StellariumNative = () => {
             onClick={toggleGrid}
           />
           <ToolbarButton
-            icon={isNightMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-            label={isNightMode ? "ليل" : "نهار"}
-            active={isNightMode}
-            onClick={toggleNightMode}
+            icon={<Clock className="w-4 h-4" />}
+            label={formatTime(timeHour)}
+            active={showTimeSlider}
+            onClick={() => setShowTimeSlider((v) => !v)}
           />
         </motion.div>
       )}
+
+      {/* ─── Time Slider ─── */}
+      <AnimatePresence>
+        {engineLoaded && showTimeSlider && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.25 }}
+            className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 glass-panel rounded-2xl px-5 py-4 w-[min(90vw,360px)]"
+            dir="rtl"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                {timeHour >= 18 || timeHour < 6 ? (
+                  <Moon className="w-4 h-4 text-primary" />
+                ) : (
+                  <Sun className="w-4 h-4 text-primary" />
+                )}
+                <span className="text-xs font-body text-muted-foreground">الوقت</span>
+              </div>
+              <span className="text-sm font-display font-bold text-foreground">{formatTime(timeHour)}</span>
+            </div>
+            <Slider
+              value={[timeHour]}
+              onValueChange={handleTimeChange}
+              min={0}
+              max={23.75}
+              step={0.25}
+              className="w-full"
+            />
+            <div className="flex justify-between mt-2 text-[10px] font-body text-muted-foreground/60">
+              <span>12 ص</span>
+              <span>6 ص</span>
+              <span>12 م</span>
+              <span>6 م</span>
+              <span>12 ص</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ─── Hint ─── */}
       <AnimatePresence>
