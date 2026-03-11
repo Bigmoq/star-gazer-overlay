@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Compass, Sun, Eye, X, Menu, Sparkles, MapPin, Layers, Moon, Mountain, Grid3X3, Telescope } from "lucide-react";
+import { Star, Compass, Sun, Eye, X, Menu, Sparkles, MapPin, Layers, Moon, Mountain, Grid3X3, Telescope, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 
 /* ─── Custom Arabic Names Database ─── */
 const customNamesDb: Record<string, { arabic: string; description: string }> = {
@@ -70,7 +71,8 @@ const StellariumNative = () => {
   const [showAtmosphere, setShowAtmosphere] = useState(true);
   const [showLandscape, setShowLandscape] = useState(true);
   const [showGrid, setShowGrid] = useState(false);
-  const [isNightMode, setIsNightMode] = useState(true);
+  const [timeHour, setTimeHour] = useState(22); // 0-24 range, default 10 PM
+  const [showTimeSlider, setShowTimeSlider] = useState(false);
 
   /* ─── Load & Initialize the Stellarium WASM Engine ─── */
   useEffect(() => {
@@ -295,17 +297,27 @@ const StellariumNative = () => {
     }
   }, [showGrid]);
 
-  const toggleNightMode = useCallback(() => {
+  const handleTimeChange = useCallback((value: number[]) => {
     const core = stelRef.current?.core;
+    const hour = value[0];
+    setTimeHour(hour);
     if (core) {
-      const next = !isNightMode;
       const d = new Date();
-      d.setHours(next ? 22 : 12, 0, 0, 0);
+      const wholeHour = Math.floor(hour);
+      const minutes = Math.round((hour - wholeHour) * 60);
+      d.setHours(wholeHour, minutes, 0, 0);
       const mjd = (d.getTime() / 86400000) + 40587;
       core.observer.utc = mjd;
-      setIsNightMode(next);
     }
-  }, [isNightMode]);
+  }, []);
+
+  const formatTime = (hour: number) => {
+    const h = Math.floor(hour);
+    const m = Math.round((hour - h) * 60);
+    const period = h >= 12 ? "م" : "ص";
+    const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${displayH}:${String(m).padStart(2, "0")} ${period}`;
+  };
 
   return (
     <div className="relative w-screen h-[100dvh] overflow-hidden bg-background">
@@ -424,13 +436,54 @@ const StellariumNative = () => {
             onClick={toggleGrid}
           />
           <ToolbarButton
-            icon={isNightMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-            label={isNightMode ? "ليل" : "نهار"}
-            active={isNightMode}
-            onClick={toggleNightMode}
+            icon={<Clock className="w-4 h-4" />}
+            label={formatTime(timeHour)}
+            active={showTimeSlider}
+            onClick={() => setShowTimeSlider((v) => !v)}
           />
         </motion.div>
       )}
+
+      {/* ─── Time Slider ─── */}
+      <AnimatePresence>
+        {engineLoaded && showTimeSlider && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.25 }}
+            className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 glass-panel rounded-2xl px-5 py-4 w-[min(90vw,360px)]"
+            dir="rtl"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                {timeHour >= 18 || timeHour < 6 ? (
+                  <Moon className="w-4 h-4 text-primary" />
+                ) : (
+                  <Sun className="w-4 h-4 text-primary" />
+                )}
+                <span className="text-xs font-body text-muted-foreground">الوقت</span>
+              </div>
+              <span className="text-sm font-display font-bold text-foreground">{formatTime(timeHour)}</span>
+            </div>
+            <Slider
+              value={[timeHour]}
+              onValueChange={handleTimeChange}
+              min={0}
+              max={23.75}
+              step={0.25}
+              className="w-full"
+            />
+            <div className="flex justify-between mt-2 text-[10px] font-body text-muted-foreground/60">
+              <span>12 ص</span>
+              <span>6 ص</span>
+              <span>12 م</span>
+              <span>6 م</span>
+              <span>12 ص</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ─── Hint ─── */}
       <AnimatePresence>
