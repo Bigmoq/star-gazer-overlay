@@ -191,6 +191,11 @@ const StellariumNative = () => {
                 key: "sun",
               }, "Sun survey");
 
+              // DSS Deep Sky Survey (real sky images when zooming in)
+              addDataSourceCompat(core.dsos, {
+                url: DATA_BASE_URL + "surveys/dss",
+              }, "DSS sky survey");
+
               // Set observer location — try user's GPS, fallback to Riyadh
               const setDefaultLocation = () => {
                 core.observer.latitude = (24.7136 * Math.PI) / 180;
