@@ -257,10 +257,10 @@ const StellariumNative = () => {
               // ── Breathtaking Sky Settings (verified from C source core.c) ──
               // Bortle 1 = pristine dark sky, no light pollution
               core.bortle_index = 1;
-              // Increase star rendering size — bright stars get halos
-              core.star_linear_scale = 1.8;
-              // Boost size difference between bright/faint stars
-              core.star_relative_scale = 1.8;
+              // Star rendering — balanced brightness (closer to Stellarium Desktop)
+              core.star_linear_scale = 0.9;
+              // Subtle size difference between bright/faint stars
+              core.star_relative_scale = 1.0;
               // Show stars down to mag 12
               core.display_limit_mag = 12.0;
               // Do NOT touch exposure_scale — default 1.0 preserves
