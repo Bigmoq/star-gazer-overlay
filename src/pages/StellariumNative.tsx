@@ -255,13 +255,23 @@ const StellariumNative = () => {
                 core.landscapes.visible = true;
               }
               // Show star & planet names for bright objects
-              if (core.stars) {
-                core.stars.labels_visible = true;
-                core.stars.labels_mag_offset = -2.5; // only brightest (mag ~4 and brighter)
-              }
-              if (core.planets) {
-                core.planets.labels_visible = true;
-              }
+              try {
+                // Try multiple API variants for star labels
+                if (core.stars) {
+                  core.stars.labels_visible = true;
+                  core.stars.show_labels = true;
+                  if (core.stars.labels_mag_offset !== undefined) core.stars.labels_mag_offset = -2.5;
+                  if (core.stars.label_mag !== undefined) core.stars.label_mag = 4.0;
+                }
+                if (core.planets) {
+                  core.planets.labels_visible = true;
+                  core.planets.show_labels = true;
+                }
+                console.log("🏷️ Star labels config:", JSON.stringify({
+                  stars_keys: core.stars ? Object.keys(core.stars).filter(k => k.includes('label') || k.includes('name')).join(',') : 'N/A',
+                  planets_keys: core.planets ? Object.keys(core.planets).filter(k => k.includes('label') || k.includes('name')).join(',') : 'N/A',
+                }));
+              } catch(e) { console.warn("Label setup error:", e); }
 
               // ── Breathtaking Sky Settings (verified from C source core.c) ──
               // Bortle 1 = pristine dark sky, no light pollution
