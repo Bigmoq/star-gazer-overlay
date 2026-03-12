@@ -150,7 +150,7 @@ const StellariumNative = () => {
 
               // IMPORTANT: Gaia survey includes bright stars (< 8) that were missing.
               addDataSourceCompat(core.stars, {
-                url: "https://data.stellarium.org/surveys/gaia",
+                url: DATA_BASE_URL + "surveys/gaia",
                 key: "gaia",
               }, "Stars Gaia (bright + faint)");
 
