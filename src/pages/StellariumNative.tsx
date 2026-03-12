@@ -68,6 +68,7 @@ const StellariumNative = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showConstellations, setShowConstellations] = useState(true);
+  const [showConstellationArt, setShowConstellationArt] = useState(false);
   const [showAtmosphere, setShowAtmosphere] = useState(false);
   const [showLandscape, setShowLandscape] = useState(true);
   const [showGrid, setShowGrid] = useState(false);
