@@ -148,6 +148,11 @@ const StellariumNative = () => {
                 }
               };
 
+              // Minimal stars (brightest, mag 0-7) — MUST be loaded first
+              addDataSourceCompat(core.stars, {
+                url: DATA_BASE_URL + "stars-minimal",
+              }, "Stars minimal (brightest)");
+
               // IMPORTANT: Gaia survey includes bright stars (< 8) that were missing.
               addDataSourceCompat(core.stars, {
                 url: DATA_BASE_URL + "surveys/gaia",
