@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { findByCode, type StarRecord } from "@/lib/starStore";
 import { extractStarIdFromUrl } from "@/lib/stellariumParser";
@@ -17,8 +17,9 @@ const StarView = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [star, setStar] = useState<StarRecord | null>(null);
   const [loading, setLoading] = useState(true);
-  const [introDone, setIntroDone] = useState(true);
-  const [showMarker, setShowMarker] = useState(true);
+  const [introDone, setIntroDone] = useState(false); // Show intro first!
+  const [showMarker, setShowMarker] = useState(false);
+  const [showUI, setShowUI] = useState(false);
   const [starId, setStarId] = useState<string | undefined>();
 
   // Load star data
@@ -27,7 +28,6 @@ const StarView = () => {
     findByCode(decodeURIComponent(code)).then((data) => {
       if (data) {
         setStar(data);
-        // Extract star identifier from the stellarium URL
         const id = extractStarIdFromUrl(data.stellariumUrl);
         if (id) setStarId(id);
       }
@@ -35,15 +35,33 @@ const StarView = () => {
     });
   }, [code]);
 
-  // Initialize the native engine with target star
-  const { engineLoaded, engineError, loadingProgress, targetFound, goToStar } = useStellariumEngine(canvasRef, {
+  // Initialize engine — deferred navigation (intro shows first)
+  const {
+    engineLoaded, engineError, loadingProgress,
+    targetFound, starReady, goToStar, cinematicZoomToStar
+  } = useStellariumEngine(canvasRef, {
     targetStarId: starId,
     targetFov: 0.5,
     initialFov: 120,
     atmosphere: false,
-    landscape: false, // cleaner view for star focus
+    landscape: false,
     constellations: true,
+    deferNavigation: true,
   });
+
+  // When intro completes → trigger cinematic zoom
+  const handleIntroComplete = useCallback(() => {
+    setIntroDone(true);
+    // Start cinematic zoom after a brief moment
+    setTimeout(() => {
+      cinematicZoomToStar(0.5, 4000); // 4 second smooth zoom
+    }, 300);
+    // Show marker and UI after zoom mostly completes
+    setTimeout(() => {
+      setShowMarker(true);
+      setShowUI(true);
+    }, 3500);
+  }, [cinematicZoomToStar]);
 
   // Hide marker on interaction
   useEffect(() => {
@@ -92,14 +110,14 @@ const StarView = () => {
 
   return (
     <div className="relative w-screen h-[100dvh] overflow-hidden bg-background">
-      {/* ─── Full-Screen Canvas (Native Engine) ─── */}
+      {/* ─── Full-Screen Canvas ─── */}
       <canvas
         ref={canvasRef}
         className="absolute inset-0 w-full h-full outline-none"
         tabIndex={0}
       />
 
-      {/* ─── Loading Overlay ─── */}
+      {/* ─── Loading Screen (before engine loads) ─── */}
       <AnimatePresence>
         {!engineLoaded && (
           <motion.div
@@ -152,14 +170,27 @@ const StarView = () => {
         )}
       </AnimatePresence>
 
-      {/* ─── Star View Overlays ─── */}
+      {/* ─── Cinematic Intro (name + message + date) ─── */}
       <AnimatePresence>
-        {engineLoaded && introDone && (
+        {engineLoaded && !introDone && (
+          <StarIntro
+            name={star.customName}
+            message={star.message}
+            date={star.date}
+            onComplete={handleIntroComplete}
+            isMapReady={starReady}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ─── Star View UI (appears after zoom) ─── */}
+      <AnimatePresence>
+        {introDone && showUI && (
           <>
             {/* Top buttons */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
               className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 flex gap-1.5 sm:gap-2"
             >
@@ -199,25 +230,15 @@ const StarView = () => {
               </div>
             </motion.div>
 
+            {/* Star marker */}
             <AnimatePresence>
-              {showMarker && targetFound && <StarMarker name={star.customName} visible={showMarker} />}
+              {showMarker && <StarMarker name={star.customName} visible={showMarker} />}
             </AnimatePresence>
+
+            {/* Info panel + message */}
             <StarInfoPanel star={panelData} />
             <StarMessage message={star.message} date={star.date} />
           </>
-        )}
-      </AnimatePresence>
-
-      {/* ─── Intro animation ─── */}
-      <AnimatePresence>
-        {!introDone && engineLoaded && (
-          <StarIntro
-            name={star.customName}
-            message={star.message}
-            date={star.date}
-            onComplete={() => setIntroDone(true)}
-            isMapReady={engineLoaded}
-          />
         )}
       </AnimatePresence>
     </div>

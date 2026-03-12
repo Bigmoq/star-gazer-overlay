@@ -10,18 +10,14 @@ const SUPABASE_URL = "https://zhajybiboozrllfiplyz.supabase.co";
 const DATA_BASE_URL = `${SUPABASE_URL}/functions/v1/stellarium-proxy/`;
 
 interface UseEngineOptions {
-  /** If provided, navigate to this star after engine loads */
   targetStarId?: string;
-  /** FOV in degrees for targeting (default 0.5) */
   targetFov?: number;
-  /** Initial FOV in degrees (default 120) */
   initialFov?: number;
-  /** Show atmosphere (default false) */
   atmosphere?: boolean;
-  /** Show landscape (default true) */
   landscape?: boolean;
-  /** Show constellations (default true) */
   constellations?: boolean;
+  /** If true, don't auto-navigate — wait for cinematicZoom call */
+  deferNavigation?: boolean;
 }
 
 export function useStellariumEngine(
@@ -33,6 +29,7 @@ export function useStellariumEngine(
   const [engineError, setEngineError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [targetFound, setTargetFound] = useState(false);
+  const [starReady, setStarReady] = useState(false); // star found but not zoomed yet
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -75,7 +72,6 @@ export function useStellariumEngine(
             try {
               const core = stel.core;
 
-              // ── Add data sources ──
               const addDS = (mod: any, source: { url: string; key?: string }, label: string) => {
                 if (!mod?.addDataSource) return;
                 try { mod.addDataSource(source); } catch {
@@ -96,7 +92,6 @@ export function useStellariumEngine(
               addDS(core.planets, { url: DATA_BASE_URL + "surveys/moon", key: "default" }, "Planets default");
               addDS(core.dsos, { url: DATA_BASE_URL + "surveys/dss" }, "DSS");
 
-              // ── Observer location ──
               const setDefault = () => {
                 core.observer.latitude = (24.7136 * Math.PI) / 180;
                 core.observer.longitude = (46.6753 * Math.PI) / 180;
@@ -117,12 +112,10 @@ export function useStellariumEngine(
                 setDefault();
               }
 
-              // ── Time: 10 PM Riyadh ──
               const now = new Date();
               const utcNight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 19, 0, 0);
               core.observer.utc = utcNight / 86400000 + 40587;
 
-              // ── Visual layers ──
               if (core.constellations) {
                 core.constellations.lines_visible = options.constellations !== false;
                 core.constellations.labels_visible = options.constellations !== false;
@@ -139,16 +132,15 @@ export function useStellariumEngine(
                 core.planets.hints_mag_offset = 0;
               }
 
-              // ── Rendering settings ──
               core.bortle_index = 1;
               core.star_linear_scale = 0.9;
               core.star_relative_scale = 1.0;
               core.display_limit_mag = 12.0;
               core.fov = ((options.initialFov || 120) * Math.PI) / 180;
 
-              // ── Navigate to target star ──
+              // Pre-find and lock the star (point camera but keep wide FOV)
               if (options.targetStarId) {
-                navigateToStar(stel, options.targetStarId, options.targetFov || 0.5);
+                prefindStar(stel, options.targetStarId);
               }
 
             } catch (e) {
@@ -157,7 +149,7 @@ export function useStellariumEngine(
 
             setTimeout(() => setEngineLoaded(true), 500);
           },
-          onError: (err: any) => {
+          onError: () => {
             clearInterval(progressInterval);
             setEngineError("تعذّر تهيئة محرك النجوم.");
           },
@@ -182,22 +174,20 @@ export function useStellariumEngine(
     };
   }, []);
 
-  const navigateToStar = useCallback((stel: any, starId: string, fovDeg: number) => {
+  /** Find the star and point camera at it, but don't zoom yet */
+  const prefindStar = useCallback((stel: any, starId: string) => {
     const core = stel.core;
-
-    // Format: "SAO1818" → "SAO 1818", "HIP11767" → "HIP 11767"
     const formattedId = starId.replace(/([A-Za-z]+)(\d+)/, "$1 $2");
 
-    // Try multiple search patterns with delay to allow data to load
     const trySearch = (attempts: number) => {
       if (attempts <= 0) {
         console.warn("⚠️ Could not find star:", starId);
+        setStarReady(true); // proceed anyway
         return;
       }
 
       let obj = null;
       const queries = [formattedId, starId, `NAME ${formattedId}`, `NAME ${starId}`];
-      
       for (const q of queries) {
         try {
           obj = core.search?.(q) || stel.getObj?.(q);
@@ -208,31 +198,72 @@ export function useStellariumEngine(
       if (obj) {
         console.log("🎯 Found star:", starId);
         try {
-          // Select and lock onto the star
           core.selection = obj;
           core.lock = obj;
-          // Zoom to target FOV
-          const fovRad = (fovDeg * Math.PI) / 180;
-          core.fov = fovRad;
-          setTargetFound(true);
+          // Keep wide FOV — zoom will happen cinematically later
         } catch (e) {
-          console.warn("⚠️ Error navigating to star:", e);
+          console.warn("⚠️ Error selecting star:", e);
         }
+        setStarReady(true);
       } else {
-        // Retry after data loads
         setTimeout(() => trySearch(attempts - 1), 2000);
       }
     };
 
-    // Start searching after a delay to allow star catalogs to load
-    setTimeout(() => trySearch(10), 3000);
+    setTimeout(() => trySearch(10), 2000);
+  }, []);
+
+  /** Cinematic zoom: smoothly animate FOV from current to target */
+  const cinematicZoomToStar = useCallback((targetFovDeg = 0.5, durationMs = 3000) => {
+    const core = stelRef.current?.core;
+    if (!core) return;
+
+    const startFov = core.fov;
+    const endFov = (targetFovDeg * Math.PI) / 180;
+    const startTime = performance.now();
+
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / durationMs, 1);
+      // Ease-in-out cubic for smooth cinematic feel
+      const eased = progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+      // Logarithmic interpolation for natural zoom feel
+      const logStart = Math.log(startFov);
+      const logEnd = Math.log(endFov);
+      core.fov = Math.exp(logStart + (logEnd - logStart) * eased);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        core.fov = endFov;
+        setTargetFound(true);
+      }
+    };
+
+    requestAnimationFrame(animate);
   }, []);
 
   const goToStar = useCallback((starId: string, fovDeg = 0.5) => {
     if (stelRef.current) {
-      navigateToStar(stelRef.current, starId, fovDeg);
+      const core = stelRef.current.core;
+      const formattedId = starId.replace(/([A-Za-z]+)(\d+)/, "$1 $2");
+      const queries = [formattedId, starId, `NAME ${formattedId}`];
+      for (const q of queries) {
+        try {
+          const obj = core.search?.(q) || stelRef.current.getObj?.(q);
+          if (obj) {
+            core.selection = obj;
+            core.lock = obj;
+            cinematicZoomToStar(fovDeg, 2000);
+            return;
+          }
+        } catch {}
+      }
     }
-  }, [navigateToStar]);
+  }, [cinematicZoomToStar]);
 
   return {
     stelRef,
@@ -240,6 +271,8 @@ export function useStellariumEngine(
     engineError,
     loadingProgress,
     targetFound,
+    starReady,
     goToStar,
+    cinematicZoomToStar,
   };
 }
