@@ -255,7 +255,8 @@ const StellariumNative = () => {
               core.fov = (120 * Math.PI) / 180;
 
               // ── Diagnostic: log star catalog status ──
-              console.log("🌟 Star data source URL:", DATA_BASE_URL + "stars");
+              console.log("🌟 Star source (bright+faint):", "https://data.stellarium.org/surveys/gaia");
+              console.log("🌟 Star source fallback (faint):", DATA_BASE_URL + "stars");
               console.log("🔧 core.star_linear_scale =", core.star_linear_scale);
               console.log("🔧 core.star_relative_scale =", core.star_relative_scale);
               console.log("🔧 core.bortle_index =", core.bortle_index);
