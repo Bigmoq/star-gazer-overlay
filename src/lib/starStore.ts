@@ -91,6 +91,20 @@ const demoStars: StarRecord[] = [
     stellariumUrl: "https://stellarium-web.org/skysource/HIP69673?fov=0.5",
     createdAt: "2025-03-01T00:00:00Z",
   },
+  {
+    id: "4",
+    code: "HIP32349",
+    customName: "نوره",
+    originalName: "Sirius (Alpha Canis Majoris)",
+    message: "أنتِ مثل سيريوس، ألمع نجمة في سمائي 🌠 كل ليلة أرفع رأسي وأبتسم لأنك موجودة",
+    date: "2026-03-12",
+    magnitude: -1.46,
+    distance: "8.6 سنة ضوئية",
+    spectralClass: "A1V",
+    constellation: "Canis Major",
+    stellariumUrl: "https://stellarium-web.org/skysource/HIP32349?fov=0.5",
+    createdAt: "2026-03-12T00:00:00Z",
+  },
 ];
 
 export async function findByCode(code: string): Promise<StarRecord | undefined> {
