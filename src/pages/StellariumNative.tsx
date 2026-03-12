@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Compass, Sun, Eye, X, Menu, Sparkles, MapPin, Layers, Moon, Mountain, Grid3X3, Telescope, Clock } from "lucide-react";
+import { Star, Compass, Sun, Eye, X, Menu, Sparkles, MapPin, Layers, Moon, Mountain, Grid3X3, Telescope, Clock, PenTool } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 
@@ -68,6 +68,7 @@ const StellariumNative = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showConstellations, setShowConstellations] = useState(true);
+  const [showConstellationArt, setShowConstellationArt] = useState(false);
   const [showAtmosphere, setShowAtmosphere] = useState(false);
   const [showLandscape, setShowLandscape] = useState(true);
   const [showGrid, setShowGrid] = useState(false);
@@ -417,6 +418,15 @@ const StellariumNative = () => {
     }
   }, [showGrid]);
 
+  const toggleConstellationArt = useCallback(() => {
+    const core = stelRef.current?.core;
+    if (core?.constellations) {
+      const next = !showConstellationArt;
+      core.constellations.images_visible = next;
+      setShowConstellationArt(next);
+    }
+  }, [showConstellationArt]);
+
   const handleTimeChange = useCallback((value: number[]) => {
     const core = stelRef.current?.core;
     const hour = value[0];
@@ -540,7 +550,8 @@ const StellariumNative = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, type: "spring", stiffness: 200, damping: 25 }}
-          className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30"
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30"
+          style={{ maxWidth: "calc(100vw - 32px)" }}
         >
           <div
             className="flex items-center gap-1 px-2 py-2 rounded-2xl"
@@ -553,16 +564,17 @@ const StellariumNative = () => {
             }}
           >
             <ToolbarButton
-              icon={<Layers className="w-[18px] h-[18px]" />}
-              label="الأبراج"
-              active={showConstellations}
-              onClick={toggleConstellations}
+              icon={<Clock className="w-[18px] h-[18px]" />}
+              label={formatTime(timeHour)}
+              active={showTimeSlider}
+              onClick={() => setShowTimeSlider((v) => !v)}
             />
+            <div className="w-px h-7 mx-0.5" style={{ background: "hsl(var(--foreground) / 0.1)" }} />
             <ToolbarButton
-              icon={<Sun className="w-[18px] h-[18px]" />}
-              label="الغلاف الجوي"
-              active={showAtmosphere}
-              onClick={toggleAtmosphere}
+              icon={<Grid3X3 className="w-[18px] h-[18px]" />}
+              label="الشبكة"
+              active={showGrid}
+              onClick={toggleGrid}
             />
             <ToolbarButton
               icon={<Mountain className="w-[18px] h-[18px]" />}
@@ -571,17 +583,22 @@ const StellariumNative = () => {
               onClick={toggleLandscape}
             />
             <ToolbarButton
-              icon={<Grid3X3 className="w-[18px] h-[18px]" />}
-              label="الشبكة"
-              active={showGrid}
-              onClick={toggleGrid}
+              icon={<Sun className="w-[18px] h-[18px]" />}
+              label="الغلاف الجوي"
+              active={showAtmosphere}
+              onClick={toggleAtmosphere}
             />
-            <div className="w-px h-7 mx-0.5" style={{ background: "hsl(var(--foreground) / 0.1)" }} />
             <ToolbarButton
-              icon={<Clock className="w-[18px] h-[18px]" />}
-              label={formatTime(timeHour)}
-              active={showTimeSlider}
-              onClick={() => setShowTimeSlider((v) => !v)}
+              icon={<Layers className="w-[18px] h-[18px]" />}
+              label="الأبراج"
+              active={showConstellations}
+              onClick={toggleConstellations}
+            />
+            <ToolbarButton
+              icon={<PenTool className="w-[18px] h-[18px]" />}
+              label="رسومات"
+              active={showConstellationArt}
+              onClick={toggleConstellationArt}
             />
           </div>
         </motion.div>
