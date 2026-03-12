@@ -148,10 +148,10 @@ const StellariumNative = () => {
                 }
               };
 
-              // Minimal stars (brightest, mag 0-7) — MUST be loaded first
+              // Brightest stars (Sirius, Vega, Rigel etc — mag 0 to 7)
               addDataSourceCompat(core.stars, {
                 url: DATA_BASE_URL + "stars-minimal",
-              }, "Stars minimal (brightest)");
+              }, "Stars minimal (brightest mag 0-7)");
 
               // IMPORTANT: Gaia survey includes bright stars (< 8) that were missing.
               addDataSourceCompat(core.stars, {
