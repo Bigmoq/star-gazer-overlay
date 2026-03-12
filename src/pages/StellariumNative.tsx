@@ -537,41 +537,53 @@ const StellariumNative = () => {
       {/* ─── Bottom Toolbar ─── */}
       {engineLoaded && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-2"
+          transition={{ delay: 0.5, type: "spring", stiffness: 200, damping: 25 }}
+          className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30"
         >
-          <ToolbarButton
-            icon={<Layers className="w-4 h-4" />}
-            label="الأبراج"
-            active={showConstellations}
-            onClick={toggleConstellations}
-          />
-          <ToolbarButton
-            icon={<Sun className="w-4 h-4" />}
-            label="الغلاف الجوي"
-            active={showAtmosphere}
-            onClick={toggleAtmosphere}
-          />
-          <ToolbarButton
-            icon={<Mountain className="w-4 h-4" />}
-            label="المشهد"
-            active={showLandscape}
-            onClick={toggleLandscape}
-          />
-          <ToolbarButton
-            icon={<Grid3X3 className="w-4 h-4" />}
-            label="الشبكة"
-            active={showGrid}
-            onClick={toggleGrid}
-          />
-          <ToolbarButton
-            icon={<Clock className="w-4 h-4" />}
-            label={formatTime(timeHour)}
-            active={showTimeSlider}
-            onClick={() => setShowTimeSlider((v) => !v)}
-          />
+          <div
+            className="flex items-center gap-1 px-2 py-2 rounded-2xl"
+            style={{
+              background: "hsl(var(--background) / 0.45)",
+              backdropFilter: "blur(20px) saturate(1.4)",
+              WebkitBackdropFilter: "blur(20px) saturate(1.4)",
+              border: "1px solid hsl(var(--foreground) / 0.08)",
+              boxShadow: "0 8px 32px hsl(var(--background) / 0.5), inset 0 1px 0 hsl(var(--foreground) / 0.05)",
+            }}
+          >
+            <ToolbarButton
+              icon={<Layers className="w-[18px] h-[18px]" />}
+              label="الأبراج"
+              active={showConstellations}
+              onClick={toggleConstellations}
+            />
+            <ToolbarButton
+              icon={<Sun className="w-[18px] h-[18px]" />}
+              label="الغلاف الجوي"
+              active={showAtmosphere}
+              onClick={toggleAtmosphere}
+            />
+            <ToolbarButton
+              icon={<Mountain className="w-[18px] h-[18px]" />}
+              label="المشهد"
+              active={showLandscape}
+              onClick={toggleLandscape}
+            />
+            <ToolbarButton
+              icon={<Grid3X3 className="w-[18px] h-[18px]" />}
+              label="الشبكة"
+              active={showGrid}
+              onClick={toggleGrid}
+            />
+            <div className="w-px h-7 mx-0.5" style={{ background: "hsl(var(--foreground) / 0.1)" }} />
+            <ToolbarButton
+              icon={<Clock className="w-[18px] h-[18px]" />}
+              label={formatTime(timeHour)}
+              active={showTimeSlider}
+              onClick={() => setShowTimeSlider((v) => !v)}
+            />
+          </div>
         </motion.div>
       )}
 
@@ -747,13 +759,23 @@ const ToolbarButton = ({
 }) => (
   <button
     onClick={onClick}
-    className={`glass-panel rounded-xl px-3 py-2.5 flex flex-col items-center gap-1 transition-all duration-200 min-w-[60px] ${
-      active ? "text-primary border-primary/30" : "text-muted-foreground opacity-60"
-    }`}
+    className="relative flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-300 min-w-[52px] group"
+    style={{
+      background: active ? "hsl(var(--primary) / 0.15)" : "transparent",
+      color: active ? "hsl(var(--primary))" : "hsl(var(--foreground) / 0.5)",
+    }}
     title={label}
   >
-    {icon}
-    <span className="text-[9px] font-body hidden sm:block">{label}</span>
+    <div className="transition-transform duration-200 group-hover:scale-110">
+      {icon}
+    </div>
+    <span className="text-[10px] font-body leading-none hidden sm:block">{label}</span>
+    {active && (
+      <div
+        className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
+        style={{ background: "hsl(var(--primary))" }}
+      />
+    )}
   </button>
 );
 
