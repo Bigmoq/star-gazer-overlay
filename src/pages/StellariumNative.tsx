@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Compass, Sun, Eye, X, Menu, Sparkles, MapPin, Layers, Moon, Mountain, Grid3X3, Telescope, Clock } from "lucide-react";
+import { Star, Compass, Sun, Eye, X, Menu, Sparkles, MapPin, Layers, Moon, Mountain, Grid3X3, Telescope, Clock, PenTool } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 
