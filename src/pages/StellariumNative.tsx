@@ -160,6 +160,11 @@ const StellariumNative = () => {
                 key: "extended",
               }, "Stars proxy extended");
 
+              addDataSourceCompat(core.stars, {
+                url: DATA_BASE_URL + "stars-extended",
+                key: "stars-extended",
+              }, "Stars proxy stars-extended");
+
               addDataSourceCompat(core.skycultures, {
                 url: DATA_BASE_URL + "skycultures/western",
                 key: "western",
