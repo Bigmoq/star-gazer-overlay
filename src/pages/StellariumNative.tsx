@@ -759,13 +759,23 @@ const ToolbarButton = ({
 }) => (
   <button
     onClick={onClick}
-    className={`glass-panel rounded-xl px-3 py-2.5 flex flex-col items-center gap-1 transition-all duration-200 min-w-[60px] ${
-      active ? "text-primary border-primary/30" : "text-muted-foreground opacity-60"
-    }`}
+    className="relative flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-300 min-w-[52px] group"
+    style={{
+      background: active ? "hsl(var(--primary) / 0.15)" : "transparent",
+      color: active ? "hsl(var(--primary))" : "hsl(var(--foreground) / 0.5)",
+    }}
     title={label}
   >
-    {icon}
-    <span className="text-[9px] font-body hidden sm:block">{label}</span>
+    <div className="transition-transform duration-200 group-hover:scale-110">
+      {icon}
+    </div>
+    <span className="text-[10px] font-body leading-none hidden sm:block">{label}</span>
+    {active && (
+      <div
+        className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
+        style={{ background: "hsl(var(--primary))" }}
+      />
+    )}
   </button>
 );
 
