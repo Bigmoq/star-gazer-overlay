@@ -121,38 +121,70 @@ const StellariumNative = () => {
               const core = stel.core;
 
               // ── Add all data sources ──
-              // Stars — must be "stars" NOT "surveys/stars" (verified via server logs)
-              core.stars.addDataSource({ url: DATA_BASE_URL + "stars" });
-              
-              // Sky cultures
-              core.skycultures.addDataSource({
+              const addDataSourceCompat = (
+                moduleObj: any,
+                source: { url: string; key?: string },
+                label: string
+              ) => {
+                if (!moduleObj?.addDataSource) {
+                  console.warn(`⚠️ ${label}: addDataSource not available`);
+                  return;
+                }
+
+                // Some wrapper builds accept object form, others positional args.
+                try {
+                  moduleObj.addDataSource(source);
+                  console.log(`✅ ${label} loaded (object API):`, source.url);
+                  return;
+                } catch {
+                  // try positional fallback
+                }
+
+                try {
+                  moduleObj.addDataSource(source.url, source.key);
+                  console.log(`✅ ${label} loaded (positional API):`, source.url);
+                } catch (e) {
+                  console.warn(`⚠️ ${label} failed:`, source.url, e);
+                }
+              };
+
+              // IMPORTANT: Gaia survey includes bright stars (< 8) that were missing.
+              addDataSourceCompat(core.stars, {
+                url: "https://data.stellarium.org/surveys/gaia",
+                key: "gaia",
+              }, "Stars Gaia (bright + faint)");
+
+              // Keep proxy extended survey as fallback (mainly faint stars).
+              addDataSourceCompat(core.stars, {
+                url: DATA_BASE_URL + "stars",
+                key: "extended",
+              }, "Stars proxy extended");
+
+              addDataSourceCompat(core.skycultures, {
                 url: DATA_BASE_URL + "skycultures/western",
                 key: "western",
-              });
-              
-              // Deep sky objects
-              core.dsos.addDataSource({ url: DATA_BASE_URL + "dso" });
-              
-              // Landscape
-              core.landscapes.addDataSource({
+              }, "Skyculture western");
+
+              addDataSourceCompat(core.dsos, { url: DATA_BASE_URL + "dso" }, "DSO catalog");
+
+              addDataSourceCompat(core.landscapes, {
                 url: DATA_BASE_URL + "landscapes/guereins",
                 key: "guereins",
-              });
-              
-              // Milky Way
-              core.milkyway.addDataSource({
+              }, "Landscape guereins");
+
+              addDataSourceCompat(core.milkyway, {
                 url: DATA_BASE_URL + "surveys/milkyway",
-              });
-              
-              // Planets — correct paths are surveys/moon and surveys/sun
-              core.planets.addDataSource({
+              }, "Milky Way");
+
+              addDataSourceCompat(core.planets, {
                 url: DATA_BASE_URL + "surveys/moon",
                 key: "moon",
-              });
-              core.planets.addDataSource({
+              }, "Moon survey");
+
+              addDataSourceCompat(core.planets, {
                 url: DATA_BASE_URL + "surveys/sun",
                 key: "sun",
-              });
+              }, "Sun survey");
 
               // Set observer location — try user's GPS, fallback to Riyadh
               const setDefaultLocation = () => {
