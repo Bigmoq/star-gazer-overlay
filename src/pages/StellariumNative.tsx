@@ -254,6 +254,14 @@ const StellariumNative = () => {
               if (core.landscapes) {
                 core.landscapes.visible = true;
               }
+              // Show star & planet names for bright objects
+              if (core.stars) {
+                core.stars.labels_visible = true;
+                core.stars.labels_mag_offset = -2.5; // only brightest (mag ~4 and brighter)
+              }
+              if (core.planets) {
+                core.planets.labels_visible = true;
+              }
 
               // ── Breathtaking Sky Settings (verified from C source core.c) ──
               // Bortle 1 = pristine dark sky, no light pollution
