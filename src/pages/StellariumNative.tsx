@@ -418,6 +418,15 @@ const StellariumNative = () => {
     }
   }, [showGrid]);
 
+  const toggleConstellationArt = useCallback(() => {
+    const core = stelRef.current?.core;
+    if (core?.constellations) {
+      const next = !showConstellationArt;
+      core.constellations.images_visible = next;
+      setShowConstellationArt(next);
+    }
+  }, [showConstellationArt]);
+
   const handleTimeChange = useCallback((value: number[]) => {
     const core = stelRef.current?.core;
     const hour = value[0];
