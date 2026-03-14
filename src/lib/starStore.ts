@@ -48,6 +48,8 @@ function rowToStar(row: DbRow): StarRecord {
     constellation: row.constellation,
     stellariumUrl: row.stellarium_url,
     createdAt: row.created_at,
+    raRad: row.ra_rad,
+    decRad: row.dec_rad,
   };
 }
 
