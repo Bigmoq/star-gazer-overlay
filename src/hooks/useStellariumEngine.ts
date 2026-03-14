@@ -13,6 +13,7 @@ const ENGINE_TIMEOUT_MS = 30000;
 
 export interface ClickedStarInfo {
   name: string;
+  identifier: string;
   magnitude: string;
   ra: string;
   dec: string;
@@ -55,6 +56,19 @@ export function useStellariumEngine(
       let name = designations[0] || obj.name || "Unknown";
       name = name.replace(/^NAME /, "");
 
+      // Extract best identifier (HIP, SAO, HD, etc.)
+      let identifier = "";
+      for (const d of designations) {
+        const clean = (d as string).replace(/^NAME /, "");
+        if (/^(HIP|SAO|HD|HR)\s?\d+/i.test(clean)) {
+          identifier = clean.replace(/\s+/g, "");
+          break;
+        }
+      }
+      if (!identifier) {
+        identifier = name.replace(/\s+/g, "");
+      }
+
       const vmag = obj.getInfo?.("vmag");
       const magStr = vmag !== undefined ? vmag.toFixed(2) : "—";
 
@@ -75,7 +89,7 @@ export function useStellariumEngine(
         }
       } catch { /* fallback */ }
 
-      setClickedStar({ name, magnitude: magStr, ra: raStr, dec: decStr });
+      setClickedStar({ name, identifier, magnitude: magStr, ra: raStr, dec: decStr });
     } catch (e) {
       console.warn("Error reading star info:", e);
     }
