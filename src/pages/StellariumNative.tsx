@@ -287,6 +287,24 @@ const StellariumNative = () => {
               // Set wide 120° FOV
               core.fov = (120 * Math.PI) / 180;
 
+              // Force constellation rendering after stars load
+              // The engine needs time to download star tiles before it can draw lines
+              setTimeout(() => {
+                if (core.constellations) {
+                  core.constellations.lines_visible = true;
+                  core.constellations.labels_visible = true;
+                  console.log("🔄 Re-enabled constellation lines after star load delay");
+                }
+              }, 5000);
+
+              setTimeout(() => {
+                if (core.constellations) {
+                  core.constellations.lines_visible = true;
+                  core.constellations.labels_visible = true;
+                  console.log("🔄 Re-enabled constellation lines (10s)");
+                }
+              }, 10000);
+
               // ── Diagnostic: log star catalog status ──
               console.log("🌟 Star source (bright+faint):", "https://data.stellarium.org/surveys/gaia");
               console.log("🌟 Star source fallback (faint):", DATA_BASE_URL + "stars");
