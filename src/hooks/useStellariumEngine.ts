@@ -17,6 +17,11 @@ export interface ClickedStarInfo {
   magnitude: string;
   ra: string;
   dec: string;
+  distance: string;
+  spectralClass: string;
+  constellation: string;
+  raRad: number;
+  decRad: number;
 }
 
 interface UseEngineOptions {
