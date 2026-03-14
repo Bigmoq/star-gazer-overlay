@@ -160,11 +160,7 @@ const StellariumNative = () => {
                 key: "gaia",
               }, "Stars Gaia (bright + faint)");
 
-              // Keep proxy extended survey as fallback (mainly faint stars).
-              addDataSourceCompat(core.stars, {
-                url: DATA_BASE_URL + "stars",
-                key: "extended",
-              }, "Stars proxy extended");
+              // stars base pack removed — returns 403 on tiles
 
               addDataSourceCompat(core.stars, {
                 url: DATA_BASE_URL + "stars-extended",
@@ -197,10 +193,13 @@ const StellariumNative = () => {
                 key: "sun",
               }, "Sun survey");
 
-              // DSS Deep Sky Survey (real sky images when zooming in)
-              addDataSourceCompat(core.dsos, {
-                url: DATA_BASE_URL + "surveys/dss",
-              }, "DSS sky survey");
+              // DSS real sky images - must use addDataSource on the correct module
+              if (core.addDataSource) {
+                try {
+                  core.addDataSource({ url: DATA_BASE_URL + "surveys/dss", type: "hips" });
+                  console.log("✅ DSS loaded on core");
+                } catch(e) { console.warn("DSS failed:", e); }
+              }
 
               // Set observer location — try user's GPS, fallback to Riyadh
               const setDefaultLocation = () => {
