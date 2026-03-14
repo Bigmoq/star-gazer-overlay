@@ -341,33 +341,42 @@ const StellariumNative = () => {
                   const fovDeg = (fovRad * 180) / Math.PI;
                   setFov(fovDeg);
                   
-                  // When zoomed in enough (< 5°), show DSS real sky image
                   if (fovDeg < 5) {
-                    try {
-                      const obs = core.observer;
-                      const center = core.getPointForCanvasPos?.(
-                        [canvasRef.current!.width / 2, canvasRef.current!.height / 2]
-                      );
-                      if (center) {
-                        const radec = stelRef.current.convertFrame(obs, "OBSERVED", "ICRF", center);
-                        const c = stelRef.current.c2s(radec);
-                        const raDeg = ((stelRef.current.anp(c[0]) * 180) / Math.PI);
-                        const decDeg = ((stelRef.current.anpm(c[1]) * 180) / Math.PI);
-                        
-                        const hipsWidth = 800;
-                        const hipsHeight = 600;
-                        const url = `https://alasky.u-strasbg.fr/hips-image-services/hips2fits?hips=DSS2/color&width=${hipsWidth}&height=${hipsHeight}&fov=${fovDeg}&ra=${raDeg}&dec=${decDeg}&projection=TAN&format=jpg`;
-                        
-                        setDssUrl(url);
-                        setDssOpacity(Math.min(1, (5 - fovDeg) / 3));
+                    let raDeg = 0;
+                    let decDeg = 0;
+                    
+                    const obs = core.observer;
+                    const centerPos = core.getPointForCanvasPos?.([canvasRef.current!.width / 2, canvasRef.current!.height / 2]);
+                    
+                    if (centerPos && stelRef.current?.convertFrame) {
+                      const radec = stelRef.current.convertFrame(obs, "OBSERVED", "ICRF", centerPos);
+                      const c = stelRef.current.c2s(radec);
+                      raDeg = ((stelRef.current.anp(c[0]) * 180) / Math.PI);
+                      decDeg = ((stelRef.current.anpm(c[1]) * 180) / Math.PI);
+                    } else {
+                      // FALLBACK: try viewing direction J2000 directly
+                      const viewDir = core.getViewDirectionJ2000?.();
+                      if (viewDir && stelRef.current?.c2s) {
+                        const c = stelRef.current.c2s(viewDir);
+                        raDeg = ((stelRef.current.anp(c[0]) * 180) / Math.PI);
+                        decDeg = ((stelRef.current.anpm(c[1]) * 180) / Math.PI);
                       }
-                    } catch(e) { /* ignore coordinate errors */ }
+                    }
+                    
+                    if (raDeg !== 0 || decDeg !== 0) {
+                      const url = `https://alasky.u-strasbg.fr/hips-image-services/hips2fits?hips=DSS2/color&width=800&height=600&fov=${fovDeg}&ra=${raDeg}&dec=${decDeg}&projection=TAN&format=jpg`;
+                      console.log("Fetching DSS overlay:", url);
+                      setDssUrl(url);
+                      setDssOpacity(Math.min(1, (5 - fovDeg) / 3));
+                    }
                   } else {
                     setDssUrl(null);
                     setDssOpacity(0);
                   }
                 }
-              } catch {}
+              } catch (e) {
+                console.error("DSS Overlay Math Error:", e);
+              }
             }, 500);
             // Store interval for cleanup
             (window as any).__fovInterval = fovInterval;
@@ -537,12 +546,11 @@ const StellariumNative = () => {
           alt="DSS Sky"
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
           style={{
-            opacity: dssOpacity * 0.7,
+            opacity: dssOpacity * 0.8,
             mixBlendMode: "screen",
-            zIndex: 5,
-            transition: "opacity 0.5s ease",
+            zIndex: 10,
+            transition: "opacity 0.3s ease-in-out",
           }}
-          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
       )}
 
