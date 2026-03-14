@@ -25,6 +25,7 @@ export function useStellariumEngine(
   options: UseEngineOptions = {}
 ) {
   const stelRef = useRef<any>(null);
+  const prefindRequestedRef = useRef<string | null>(null);
   const [engineLoaded, setEngineLoaded] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
