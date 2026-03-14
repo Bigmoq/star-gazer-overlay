@@ -331,6 +331,55 @@ const StellariumNative = () => {
 
             setTimeout(() => setEngineLoaded(true), 500);
 
+            // Track FOV + DSS overlay
+            const fovInterval = setInterval(() => {
+              try {
+                const core = stelRef.current?.core;
+                if (!core) return;
+                const fovRad = core.fov;
+                if (fovRad !== undefined) {
+                  const fovDeg = (fovRad * 180) / Math.PI;
+                  setFov(fovDeg);
+                  
+                  if (fovDeg < 5) {
+                    let raDeg = 0;
+                    let decDeg = 0;
+                    
+                    const obs = core.observer;
+                    const centerPos = core.getPointForCanvasPos?.([canvasRef.current!.width / 2, canvasRef.current!.height / 2]);
+                    
+                    if (centerPos && stelRef.current?.convertFrame) {
+                      const radec = stelRef.current.convertFrame(obs, "OBSERVED", "ICRF", centerPos);
+                      const c = stelRef.current.c2s(radec);
+                      raDeg = ((stelRef.current.anp(c[0]) * 180) / Math.PI);
+                      decDeg = ((stelRef.current.anpm(c[1]) * 180) / Math.PI);
+                    } else {
+                      // FALLBACK: try viewing direction J2000 directly
+                      const viewDir = core.getViewDirectionJ2000?.();
+                      if (viewDir && stelRef.current?.c2s) {
+                        const c = stelRef.current.c2s(viewDir);
+                        raDeg = ((stelRef.current.anp(c[0]) * 180) / Math.PI);
+                        decDeg = ((stelRef.current.anpm(c[1]) * 180) / Math.PI);
+                      }
+                    }
+                    
+                    if (raDeg !== 0 || decDeg !== 0) {
+                      const url = `https://alasky.u-strasbg.fr/hips-image-services/hips2fits?hips=DSS2/color&width=800&height=600&fov=${fovDeg}&ra=${raDeg}&dec=${decDeg}&projection=TAN&format=jpg`;
+                      console.log("Fetching DSS overlay:", url);
+                      setDssUrl(url);
+                      setDssOpacity(Math.min(1, (5 - fovDeg) / 3));
+                    }
+                  } else {
+                    setDssUrl(null);
+                    setDssOpacity(0);
+                  }
+                }
+              } catch (e) {
+                console.error("DSS Overlay Math Error:", e);
+              }
+            }, 500);
+            // Store interval for cleanup
+            (window as any).__fovInterval = fovInterval;
           },
           onError: (err: any) => {
             clearInterval(progressInterval);
@@ -353,6 +402,7 @@ const StellariumNative = () => {
 
     return () => {
       clearInterval(progressInterval);
+      clearInterval((window as any).__fovInterval);
       window.removeEventListener("resize", resize);
       if (script.parentNode) script.parentNode.removeChild(script);
     };
@@ -470,46 +520,6 @@ const StellariumNative = () => {
       core.observer.utc = mjd;
     }
   }, []);
-
-  // Listen to the React state 'fov' directly instead of querying the WASM core!
-  useEffect(() => {
-    if (fov === null || fov === undefined) return;
-    
-    // Debug to ensure React is seeing the zoom
-    console.log("React Live FOV:", fov);
-    if (fov < 5) {
-      try {
-        const core = stelRef.current?.core;
-        if (!core) return;
-        let raDeg = 0;
-        let decDeg = 0;
-        
-        const obs = core.observer;
-        const centerPos = core.getPointForCanvasPos?.([canvasRef.current!.width / 2, canvasRef.current!.height / 2]);
-        
-        if (centerPos && stelRef.current?.convertFrame) {
-             const radec = stelRef.current.convertFrame(obs, "OBSERVED", "ICRF", centerPos);
-             const c = stelRef.current.c2s(radec);
-             raDeg = ((stelRef.current.anp(c[0]) * 180) / Math.PI);
-             decDeg = ((stelRef.current.anpm(c[1]) * 180) / Math.PI);
-        }
-        if (raDeg !== 0 || decDeg !== 0) {
-            const url = `https://alasky.u-strasbg.fr/hips-image-services/hips2fits?hips=DSS2/color&width=800&height=600&fov=${fov}&ra=${raDeg}&dec=${decDeg}&projection=TAN&format=jpg`;
-            
-            if (dssUrl !== url) {
-               console.log("Fetching DSS Image:", url);
-               setDssUrl(url);
-            }
-            setDssOpacity(Math.min(1, (5 - fov) / 3));
-        }
-      } catch (e) {
-        console.error("DSS Math Error:", e);
-      }
-    } else {
-      setDssUrl(null);
-      setDssOpacity(0);
-    }
-  }, [fov, dssUrl]); // Hook triggers whenever the UI fov state changes!
 
   const formatTime = (hour: number) => {
     const h = Math.floor(hour);
