@@ -149,40 +149,44 @@ const StellariumNative = () => {
                 }
               };
 
-              // Brightest stars (Sirius, Vega, Rigel etc — mag 0 to 7)
+              // ── 1. Stars: Gaia survey (ALL stars, bright + faint, mag 0-20)
+              addDataSourceCompat(core.stars, {
+                url: DATA_BASE_URL + "surveys/gaia",
+                key: "gaia",
+              }, "Stars Gaia (all stars)");
+
+              // ── 2. Stars: minimal (brightest, fast load for initial display)
               addDataSourceCompat(core.stars, {
                 url: DATA_BASE_URL + "stars-minimal",
               }, "Stars minimal (brightest mag 0-7)");
 
-              // IMPORTANT: Gaia survey includes bright stars (< 8) that were missing.
-              addDataSourceCompat(core.stars, {
-                url: DATA_BASE_URL + "surveys/gaia",
-                key: "gaia",
-              }, "Stars Gaia (bright + faint)");
-
-              // stars base pack removed — returns 403 on tiles
-
+              // ── 3. Stars: extended (faint stars mag 8-11.5)
               addDataSourceCompat(core.stars, {
                 url: DATA_BASE_URL + "stars-extended",
                 key: "stars-extended",
-              }, "Stars proxy stars-extended");
+              }, "Stars extended (faint mag 8-11.5)");
 
+              // ── 4. Skycultures (constellation lines & names)
               addDataSourceCompat(core.skycultures, {
                 url: DATA_BASE_URL + "skycultures/western",
                 key: "western",
               }, "Skyculture western");
 
+              // ── 5. DSO catalog
               addDataSourceCompat(core.dsos, { url: DATA_BASE_URL + "dso" }, "DSO catalog");
 
+              // ── 6. Landscape
               addDataSourceCompat(core.landscapes, {
                 url: DATA_BASE_URL + "landscapes/guereins",
                 key: "guereins",
               }, "Landscape guereins");
 
+              // ── 7. Milky Way
               addDataSourceCompat(core.milkyway, {
                 url: DATA_BASE_URL + "surveys/milkyway",
               }, "Milky Way");
 
+              // ── 8. Planets
               addDataSourceCompat(core.planets, {
                 url: DATA_BASE_URL + "surveys/moon",
                 key: "moon",
@@ -193,12 +197,17 @@ const StellariumNative = () => {
                 key: "sun",
               }, "Sun survey");
 
-              // DSS real sky images - must use addDataSource on the correct module
-              if (core.addDataSource) {
-                try {
-                  core.addDataSource({ url: DATA_BASE_URL + "surveys/dss", type: "hips" });
-                  console.log("✅ DSS loaded on core");
-                } catch(e) { console.warn("DSS failed:", e); }
+              // ── 9. DSS (Deep Sky Survey - real photos when zooming)
+              try {
+                if (core.hips && core.hips.addDataSource) {
+                  core.hips.addDataSource({ url: DATA_BASE_URL + "surveys/dss" });
+                  console.log("✅ DSS loaded via core.hips");
+                } else {
+                  stel.addDataSource({ url: DATA_BASE_URL + "surveys/dss" });
+                  console.log("✅ DSS loaded via stel.addDataSource");
+                }
+              } catch(e: any) {
+                console.warn("⚠️ DSS not available in this WASM build:", e.message);
               }
 
               // Set observer location — try user's GPS, fallback to Riyadh
