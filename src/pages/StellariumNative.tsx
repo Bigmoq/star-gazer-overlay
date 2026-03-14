@@ -75,6 +75,8 @@ const StellariumNative = () => {
   const [timeHour, setTimeHour] = useState(22); // 0-24 range, default 10 PM
   const [showTimeSlider, setShowTimeSlider] = useState(false);
   const [fov, setFov] = useState<number | null>(null);
+  const [dssUrl, setDssUrl] = useState<string | null>(null);
+  const [dssOpacity, setDssOpacity] = useState(0);
 
   /* ─── Load & Initialize the Stellarium WASM Engine ─── */
   useEffect(() => {
