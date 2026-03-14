@@ -72,6 +72,8 @@ const StarView = () => {
     constellations: true,
     deferNavigation: true,
     key: engineKey,
+    fallbackRaRad: star?.raRad ?? undefined,
+    fallbackDecRad: star?.decRad ?? undefined,
   });
 
   // When intro completes → trigger cinematic zoom

@@ -153,6 +153,8 @@ export async function addStar(star: Omit<StarRecord, "id" | "createdAt">): Promi
       spectral_class: star.spectralClass,
       constellation: star.constellation,
       stellarium_url: star.stellariumUrl,
+      ra_rad: star.raRad ?? null,
+      dec_rad: star.decRad ?? null,
     })
     .select()
     .single();

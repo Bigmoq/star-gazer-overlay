@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { addStar, findByCode } from "@/lib/starStore";
+import { fetchStarData } from "@/lib/stellariumParser";
 import { toast } from "@/hooks/use-toast";
 import type { ClickedStarInfo } from "@/hooks/useStellariumEngine";
 
@@ -27,15 +28,38 @@ const AdminRegisterPanel = ({ star, onClose, onRegistered }: Props) => {
   const [saved, setSaved] = useState(false);
   const [savedCode, setSavedCode] = useState("");
 
+  // Enriched metadata (from engine + SIMBAD fallback)
+  const [distance, setDistance] = useState(star.distance || "");
+  const [spectralClass, setSpectralClass] = useState(star.spectralClass || "");
+  const [constellation, setConstellation] = useState(star.constellation || "");
+
   useEffect(() => {
     setAlreadyExists(false);
     setSaved(false);
     setCustomName("");
     setMessage("");
+    setDistance(star.distance || "");
+    setSpectralClass(star.spectralClass || "");
+    setConstellation(star.constellation || "");
+
     findByCode(code).then((existing) => {
       if (existing) setAlreadyExists(true);
     });
-  }, [code]);
+
+    // SIMBAD fallback if engine didn't provide metadata
+    if (!star.distance || !star.spectralClass) {
+      fetchStarData(code).then((simbad) => {
+        if (simbad) {
+          if (!star.distance && simbad.magnitude) {
+            // SIMBAD doesn't directly give distance, but we use what we can
+          }
+          if (!star.spectralClass && simbad.spectralClass) {
+            setSpectralClass(simbad.spectralClass);
+          }
+        }
+      }).catch(() => {});
+    }
+  }, [code, star.distance, star.spectralClass]);
 
   const handleSave = async () => {
     if (!customName.trim()) {
@@ -51,10 +75,12 @@ const AdminRegisterPanel = ({ star, onClose, onRegistered }: Props) => {
         message: message.trim(),
         date,
         magnitude: parseFloat(star.magnitude) || 0,
-        distance: "",
-        spectralClass: "",
-        constellation: "",
+        distance,
+        spectralClass,
+        constellation,
         stellariumUrl,
+        raRad: star.raRad || null,
+        decRad: star.decRad || null,
       });
       setSavedCode(code);
       setSaved(true);
