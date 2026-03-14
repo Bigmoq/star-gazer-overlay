@@ -113,6 +113,8 @@ const RegisterDrawer = ({ onRegistered, onNavigate }: RegisterDrawerProps) => {
         spectralClass: form.spectralClass,
         constellation: form.constellation,
         stellariumUrl: form.stellariumUrl,
+        raRad: null,
+        decRad: null,
       });
       setStep("success");
       onRegistered();

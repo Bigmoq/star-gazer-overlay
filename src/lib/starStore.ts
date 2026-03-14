@@ -13,6 +13,8 @@ export interface StarRecord {
   constellation: string;
   stellariumUrl: string;
   createdAt: string;
+  raRad: number | null;
+  decRad: number | null;
 }
 
 interface DbRow {
@@ -28,6 +30,8 @@ interface DbRow {
   constellation: string;
   stellarium_url: string;
   created_at: string;
+  ra_rad: number | null;
+  dec_rad: number | null;
 }
 
 function rowToStar(row: DbRow): StarRecord {
@@ -44,6 +48,8 @@ function rowToStar(row: DbRow): StarRecord {
     constellation: row.constellation,
     stellariumUrl: row.stellarium_url,
     createdAt: row.created_at,
+    raRad: row.ra_rad,
+    decRad: row.dec_rad,
   };
 }
 
@@ -62,6 +68,8 @@ const demoStars: StarRecord[] = [
     constellation: "Draco",
     stellariumUrl: "https://stellarium-web.org/skysource/SAO1818?fov=0.5",
     createdAt: "2024-12-25T00:00:00Z",
+    raRad: null,
+    decRad: null,
   },
   {
     id: "2",
@@ -76,6 +84,8 @@ const demoStars: StarRecord[] = [
     constellation: "Ursa Minor",
     stellariumUrl: "https://stellarium-web.org/skysource/HIP11767?fov=0.5",
     createdAt: "2025-01-15T00:00:00Z",
+    raRad: null,
+    decRad: null,
   },
   {
     id: "3",
@@ -90,6 +100,8 @@ const demoStars: StarRecord[] = [
     constellation: "Boötes",
     stellariumUrl: "https://stellarium-web.org/skysource/HIP69673?fov=0.5",
     createdAt: "2025-03-01T00:00:00Z",
+    raRad: null,
+    decRad: null,
   },
   {
     id: "4",
@@ -104,6 +116,8 @@ const demoStars: StarRecord[] = [
     constellation: "Canis Major",
     stellariumUrl: "https://stellarium-web.org/skysource/HIP32349?fov=0.5",
     createdAt: "2026-03-12T00:00:00Z",
+    raRad: null,
+    decRad: null,
   },
 ];
 
@@ -139,6 +153,8 @@ export async function addStar(star: Omit<StarRecord, "id" | "createdAt">): Promi
       spectral_class: star.spectralClass,
       constellation: star.constellation,
       stellarium_url: star.stellariumUrl,
+      ra_rad: star.raRad ?? null,
+      dec_rad: star.decRad ?? null,
     })
     .select()
     .single();

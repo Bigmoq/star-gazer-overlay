@@ -17,6 +17,11 @@ export interface ClickedStarInfo {
   magnitude: string;
   ra: string;
   dec: string;
+  distance: string;
+  spectralClass: string;
+  constellation: string;
+  raRad: number;
+  decRad: number;
 }
 
 interface UseEngineOptions {
@@ -28,6 +33,8 @@ interface UseEngineOptions {
   constellations?: boolean;
   deferNavigation?: boolean;
   key?: number;
+  fallbackRaRad?: number;
+  fallbackDecRad?: number;
 }
 
 function pad(n: number, len = 2): string {
@@ -74,6 +81,8 @@ export function useStellariumEngine(
 
       let raStr = "—";
       let decStr = "—";
+      let raRad = 0;
+      let decRad = 0;
       try {
         const obs = stel.core.observer;
         const radec = obj.getInfo?.("radec");
@@ -82,6 +91,8 @@ export function useStellariumEngine(
           const c = stel.c2s(cirs);
           const ra = stel.anp(c[0]);
           const dec = stel.anpm(c[1]);
+          raRad = ra;
+          decRad = dec;
           const raf = stel.a2tf(ra, 1);
           const daf = stel.a2af(dec, 1);
           raStr = `${pad(raf.hours)}h ${pad(raf.minutes)}m ${pad(raf.seconds)}.${raf.fraction}s`;
@@ -89,7 +100,30 @@ export function useStellariumEngine(
         }
       } catch { /* fallback */ }
 
-      setClickedStar({ name, identifier, magnitude: magStr, ra: raStr, dec: decStr });
+      // Extract additional metadata from engine
+      let distance = "";
+      let spectralClass = "";
+      let constellation = "";
+
+      try {
+        const distPc = obj.getInfo?.("distance");
+        if (distPc && distPc > 0) {
+          const distLy = (distPc * 3.26156).toFixed(1);
+          distance = `${distLy} سنة ضوئية`;
+        }
+      } catch {}
+
+      try {
+        spectralClass = obj.getInfo?.("spect-type") || obj.getInfo?.("spectral_type") || "";
+      } catch {}
+
+      try {
+        constellation = obj.getInfo?.("constellation") || obj.getInfo?.("cst") || "";
+      } catch {}
+
+      console.log("⭐ Star metadata:", { name, identifier, distance, spectralClass, constellation, raRad, decRad });
+
+      setClickedStar({ name, identifier, magnitude: magStr, ra: raStr, dec: decStr, distance, spectralClass, constellation, raRad, decRad });
     } catch (e) {
       console.warn("Error reading star info:", e);
     }
@@ -298,6 +332,29 @@ export function useStellariumEngine(
           core.lock = obj;
         } catch (e) {
           console.warn("⚠️ Error selecting star:", e);
+        }
+        setStarReady(true);
+      } else if (attempts <= 1) {
+        // Fallback: navigate by coordinates if available
+        if (options.fallbackRaRad != null && options.fallbackDecRad != null) {
+          console.log("📍 Using coordinate fallback for navigation");
+          try {
+            const ra = options.fallbackRaRad;
+            const dec = options.fallbackDecRad;
+            // Convert RA/Dec to a3d vector for lookat
+            const x = Math.cos(dec) * Math.cos(ra);
+            const y = Math.cos(dec) * Math.sin(ra);
+            const z = Math.sin(dec);
+            if (core.lookat) {
+              core.lookat([x, y, z], 2.0);
+            } else {
+              // Manual azalt approach
+              core.observer.yaw = ra;
+              core.observer.pitch = dec;
+            }
+          } catch (e) {
+            console.warn("⚠️ Coordinate fallback failed:", e);
+          }
         }
         setStarReady(true);
       } else {
