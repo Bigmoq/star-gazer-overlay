@@ -141,7 +141,10 @@ export function useStellariumEngine(
 
               // Pre-find and lock the star (point camera but keep wide FOV)
               if (options.targetStarId) {
+                prefindRequestedRef.current = options.targetStarId;
                 prefindStar(stel, options.targetStarId);
+              } else {
+                setStarReady(true);
               }
 
             } catch (e) {
