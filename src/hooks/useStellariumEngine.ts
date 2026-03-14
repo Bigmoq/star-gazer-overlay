@@ -217,6 +217,23 @@ export function useStellariumEngine(
     setTimeout(() => trySearch(10), 2000);
   }, []);
 
+  useEffect(() => {
+    const targetId = options.targetStarId;
+    const stel = stelRef.current;
+
+    if (!stel) return;
+    if (!targetId) {
+      setStarReady(true);
+      return;
+    }
+
+    if (prefindRequestedRef.current === targetId) return;
+
+    prefindRequestedRef.current = targetId;
+    setStarReady(false);
+    prefindStar(stel, targetId);
+  }, [options.targetStarId, prefindStar]);
+
   /** Cinematic zoom: smoothly animate FOV from current to target */
   const cinematicZoomToStar = useCallback((targetFovDeg = 0.5, durationMs = 3000) => {
     const core = stelRef.current?.core;
