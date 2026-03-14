@@ -13,6 +13,7 @@ const ENGINE_TIMEOUT_MS = 30000;
 
 export interface ClickedStarInfo {
   name: string;
+  identifier: string;
   magnitude: string;
   ra: string;
   dec: string;
