@@ -75,8 +75,6 @@ const StellariumNative = () => {
   const [timeHour, setTimeHour] = useState(22); // 0-24 range, default 10 PM
   const [showTimeSlider, setShowTimeSlider] = useState(false);
   const [fov, setFov] = useState<number | null>(null);
-  const [dssUrl, setDssUrl] = useState<string | null>(null);
-  const [dssOpacity, setDssOpacity] = useState(0);
 
   /* ─── Load & Initialize the Stellarium WASM Engine ─── */
   useEffect(() => {
@@ -331,44 +329,15 @@ const StellariumNative = () => {
 
             setTimeout(() => setEngineLoaded(true), 500);
 
-            // Track FOV + DSS overlay
+            // Track FOV changes
             const fovInterval = setInterval(() => {
               try {
-                const core = stelRef.current?.core;
-                if (!core) return;
-                const fovRad = core.fov;
+                const fovRad = stelRef.current?.core?.fov;
                 if (fovRad !== undefined) {
-                  const fovDeg = (fovRad * 180) / Math.PI;
-                  setFov(fovDeg);
-                  
-                  // When zoomed in enough (< 5°), show DSS real sky image
-                  if (fovDeg < 5) {
-                    try {
-                      const obs = core.observer;
-                      const center = core.getPointForCanvasPos?.(
-                        [canvasRef.current!.width / 2, canvasRef.current!.height / 2]
-                      );
-                      if (center) {
-                        const radec = stelRef.current.convertFrame(obs, "OBSERVED", "ICRF", center);
-                        const c = stelRef.current.c2s(radec);
-                        const raDeg = ((stelRef.current.anp(c[0]) * 180) / Math.PI);
-                        const decDeg = ((stelRef.current.anpm(c[1]) * 180) / Math.PI);
-                        
-                        const hipsWidth = 800;
-                        const hipsHeight = 600;
-                        const url = `https://alasky.u-strasbg.fr/hips-image-services/hips2fits?hips=DSS2/color&width=${hipsWidth}&height=${hipsHeight}&fov=${fovDeg}&ra=${raDeg}&dec=${decDeg}&projection=TAN&format=jpg`;
-                        
-                        setDssUrl(url);
-                        setDssOpacity(Math.min(1, (5 - fovDeg) / 3));
-                      }
-                    } catch(e) { /* ignore coordinate errors */ }
-                  } else {
-                    setDssUrl(null);
-                    setDssOpacity(0);
-                  }
+                  setFov((fovRad * 180) / Math.PI);
                 }
               } catch {}
-            }, 500);
+            }, 300);
             // Store interval for cleanup
             (window as any).__fovInterval = fovInterval;
           },
@@ -530,21 +499,6 @@ const StellariumNative = () => {
         tabIndex={0}
       />
 
-      {/* DSS Real Sky Overlay */}
-      {dssUrl && dssOpacity > 0 && (
-        <img
-          src={dssUrl}
-          alt="DSS Sky"
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-          style={{
-            opacity: dssOpacity * 0.7,
-            mixBlendMode: "screen",
-            zIndex: 5,
-            transition: "opacity 0.5s ease",
-          }}
-          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-        />
-      )}
 
       {/* ─── Loading Overlay ─── */}
       <AnimatePresence>
