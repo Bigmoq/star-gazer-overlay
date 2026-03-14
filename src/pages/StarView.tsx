@@ -6,6 +6,7 @@ import StarInfoPanel from "@/components/StarInfoPanel";
 import StarMarker from "@/components/StarMarker";
 import StarMessage from "@/components/StarMessage";
 import StarIntro from "@/components/StarIntro";
+import ClickedStarPanel from "@/components/ClickedStarPanel";
 import { useStellariumEngine } from "@/hooks/useStellariumEngine";
 import { ArrowRight, LocateFixed, Loader2, Star, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ const StarView = () => {
   const [introDone, setIntroDone] = useState(false);
   const [showMarker, setShowMarker] = useState(false);
   const [showUI, setShowUI] = useState(false);
-  const [engineKey, setEngineKey] = useState(0); // for retry
+  const [engineKey, setEngineKey] = useState(0);
 
   const starId = star ? extractStarIdFromUrl(star.stellariumUrl) : undefined;
 
@@ -57,10 +58,11 @@ const StarView = () => {
     return () => { active = false; };
   }, [code]);
 
-  // Initialize engine — canvas is ALWAYS mounted so this will work
+  // Initialize engine — canvas is ALWAYS mounted
   const {
     engineLoaded, engineError, loadingProgress,
-    targetFound, starReady, goToStar, cinematicZoomToStar
+    targetFound, starReady, goToStar, cinematicZoomToStar,
+    clickedStar, dismissClickedStar,
   } = useStellariumEngine(canvasRef, {
     targetStarId: starId || undefined,
     targetFov: 0.5,
@@ -95,6 +97,7 @@ const StarView = () => {
     if (starId) {
       goToStar(starId, 0.5);
       setShowMarker(true);
+      dismissClickedStar();
     }
   };
 
@@ -105,7 +108,6 @@ const StarView = () => {
     setEngineKey(k => k + 1);
   };
 
-  // Determine what overlay to show
   const showDataLoading = dataLoading;
   const showNotFound = !dataLoading && dataError;
   const showEngineLoading = !dataLoading && !dataError && star && !engineLoaded;
@@ -279,7 +281,7 @@ const StarView = () => {
                 className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-body text-foreground/80 text-center"
                 style={{ background: "hsl(var(--background) / 0.6)", backdropFilter: "blur(8px)" }}
               >
-                اسحب لاستكشاف السماء حول نجمك 🔭
+                انقر على أي نجم لعرض معلوماته • اسحب لاستكشاف السماء 🔭
               </div>
             </motion.div>
 
@@ -289,6 +291,13 @@ const StarView = () => {
 
             <StarInfoPanel star={panelData} />
             <StarMessage message={star.message} date={star.date} />
+
+            {/* Clicked star info panel */}
+            <AnimatePresence>
+              {clickedStar && (
+                <ClickedStarPanel star={clickedStar} onDismiss={dismissClickedStar} />
+              )}
+            </AnimatePresence>
           </>
         )}
       </AnimatePresence>

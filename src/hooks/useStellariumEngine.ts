@@ -9,7 +9,14 @@ declare global {
 const SUPABASE_URL = "https://zhajybiboozrllfiplyz.supabase.co";
 const DATA_BASE_URL = `${SUPABASE_URL}/functions/v1/stellarium-proxy/`;
 
-const ENGINE_TIMEOUT_MS = 30000; // 30s max wait
+const ENGINE_TIMEOUT_MS = 30000;
+
+export interface ClickedStarInfo {
+  name: string;
+  magnitude: string;
+  ra: string;
+  dec: string;
+}
 
 interface UseEngineOptions {
   targetStarId?: string;
@@ -19,7 +26,11 @@ interface UseEngineOptions {
   landscape?: boolean;
   constellations?: boolean;
   deferNavigation?: boolean;
-  key?: number; // change to force re-init
+  key?: number;
+}
+
+function pad(n: number, len = 2): string {
+  return String(n).padStart(len, "0");
 }
 
 export function useStellariumEngine(
@@ -34,23 +45,54 @@ export function useStellariumEngine(
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [targetFound, setTargetFound] = useState(false);
   const [starReady, setStarReady] = useState(false);
+  const [clickedStar, setClickedStar] = useState<ClickedStarInfo | null>(null);
 
-  // Reset state when key changes (retry)
   const engineKey = options.key ?? 0;
 
+  const handleStarSelected = useCallback((stel: any, obj: any) => {
+    try {
+      const designations = obj.designations?.() || [];
+      let name = designations[0] || obj.name || "Unknown";
+      name = name.replace(/^NAME /, "");
+
+      const vmag = obj.getInfo?.("vmag");
+      const magStr = vmag !== undefined ? vmag.toFixed(2) : "—";
+
+      let raStr = "—";
+      let decStr = "—";
+      try {
+        const obs = stel.core.observer;
+        const radec = obj.getInfo?.("radec");
+        if (radec) {
+          const cirs = stel.convertFrame(obs, "ICRF", "CIRS", radec);
+          const c = stel.c2s(cirs);
+          const ra = stel.anp(c[0]);
+          const dec = stel.anpm(c[1]);
+          const raf = stel.a2tf(ra, 1);
+          const daf = stel.a2af(dec, 1);
+          raStr = `${pad(raf.hours)}h ${pad(raf.minutes)}m ${pad(raf.seconds)}.${raf.fraction}s`;
+          decStr = `${daf.sign}${pad(daf.degrees)}° ${pad(daf.arcminutes)}' ${pad(daf.arcseconds)}.${daf.fraction}"`;
+        }
+      } catch { /* fallback */ }
+
+      setClickedStar({ name, magnitude: magStr, ra: raStr, dec: decStr });
+    } catch (e) {
+      console.warn("Error reading star info:", e);
+    }
+  }, []);
+
   useEffect(() => {
-    // Wait for canvas to be available
     const canvas = canvasRef.current;
     if (!canvas) return;
     if (initGuardRef.current) return;
     initGuardRef.current = true;
 
-    // Reset states
     setEngineLoaded(false);
     setEngineError(null);
     setLoadingProgress(0);
     setTargetFound(false);
     setStarReady(false);
+    setClickedStar(null);
     stelRef.current = null;
     prefindRequestedRef.current = null;
 
@@ -68,7 +110,6 @@ export function useStellariumEngine(
       setLoadingProgress((p) => (p >= 85 ? 85 : p + Math.random() * 12));
     }, 300);
 
-    // Timeout guard
     const timeoutId = setTimeout(() => {
       if (!stelRef.current) {
         clearInterval(progressInterval);
@@ -167,6 +208,13 @@ export function useStellariumEngine(
               core.display_limit_mag = 12.0;
               core.fov = ((options.initialFov || 120) * Math.PI) / 180;
 
+              // Listen for star clicks/selections
+              stel.change((obj: any, attr: string) => {
+                if (attr === "selection" && core.selection) {
+                  handleStarSelected(stel, core.selection);
+                }
+              });
+
               if (options.targetStarId) {
                 prefindRequestedRef.current = options.targetStarId;
                 prefindStar(stel, options.targetStarId);
@@ -207,7 +255,7 @@ export function useStellariumEngine(
       if (script.parentNode) script.parentNode.removeChild(script);
       initGuardRef.current = false;
     };
-  }, [engineKey]);
+  }, [engineKey, handleStarSelected]);
 
   const prefindStar = useCallback((stel: any, starId: string) => {
     const core = stel.core;
@@ -312,6 +360,10 @@ export function useStellariumEngine(
     }
   }, [cinematicZoomToStar]);
 
+  const dismissClickedStar = useCallback(() => {
+    setClickedStar(null);
+  }, []);
+
   return {
     stelRef,
     engineLoaded,
@@ -321,5 +373,7 @@ export function useStellariumEngine(
     starReady,
     goToStar,
     cinematicZoomToStar,
+    clickedStar,
+    dismissClickedStar,
   };
 }
