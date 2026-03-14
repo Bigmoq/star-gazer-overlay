@@ -9,6 +9,8 @@ declare global {
 const SUPABASE_URL = "https://zhajybiboozrllfiplyz.supabase.co";
 const DATA_BASE_URL = `${SUPABASE_URL}/functions/v1/stellarium-proxy/`;
 
+const ENGINE_TIMEOUT_MS = 30000; // 30s max wait
+
 interface UseEngineOptions {
   targetStarId?: string;
   targetFov?: number;
@@ -16,8 +18,8 @@ interface UseEngineOptions {
   atmosphere?: boolean;
   landscape?: boolean;
   constellations?: boolean;
-  /** If true, don't auto-navigate — wait for cinematicZoom call */
   deferNavigation?: boolean;
+  key?: number; // change to force re-init
 }
 
 export function useStellariumEngine(
@@ -25,16 +27,32 @@ export function useStellariumEngine(
   options: UseEngineOptions = {}
 ) {
   const stelRef = useRef<any>(null);
+  const initGuardRef = useRef(false);
   const prefindRequestedRef = useRef<string | null>(null);
   const [engineLoaded, setEngineLoaded] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [targetFound, setTargetFound] = useState(false);
-  const [starReady, setStarReady] = useState(false); // star found but not zoomed yet
+  const [starReady, setStarReady] = useState(false);
+
+  // Reset state when key changes (retry)
+  const engineKey = options.key ?? 0;
 
   useEffect(() => {
+    // Wait for canvas to be available
     const canvas = canvasRef.current;
     if (!canvas) return;
+    if (initGuardRef.current) return;
+    initGuardRef.current = true;
+
+    // Reset states
+    setEngineLoaded(false);
+    setEngineError(null);
+    setLoadingProgress(0);
+    setTargetFound(false);
+    setStarReady(false);
+    stelRef.current = null;
+    prefindRequestedRef.current = null;
 
     const dpr = window.devicePixelRatio || 1;
     const resize = () => {
@@ -50,6 +68,14 @@ export function useStellariumEngine(
       setLoadingProgress((p) => (p >= 85 ? 85 : p + Math.random() * 12));
     }, 300);
 
+    // Timeout guard
+    const timeoutId = setTimeout(() => {
+      if (!stelRef.current) {
+        clearInterval(progressInterval);
+        setEngineError("استغرق تحميل المحرك وقتاً طويلاً. حاول مرة أخرى.");
+      }
+    }, ENGINE_TIMEOUT_MS);
+
     const script = document.createElement("script");
     script.src = "/stellarium-web-engine.js";
     script.async = true;
@@ -57,6 +83,7 @@ export function useStellariumEngine(
     script.onload = () => {
       if (typeof window.StelWebEngine !== "function") {
         clearInterval(progressInterval);
+        clearTimeout(timeoutId);
         setEngineError("لم يتم العثور على دالة StelWebEngine");
         return;
       }
@@ -68,6 +95,7 @@ export function useStellariumEngine(
           onReady: (stel: any) => {
             stelRef.current = stel;
             clearInterval(progressInterval);
+            clearTimeout(timeoutId);
             setLoadingProgress(100);
 
             try {
@@ -139,14 +167,12 @@ export function useStellariumEngine(
               core.display_limit_mag = 12.0;
               core.fov = ((options.initialFov || 120) * Math.PI) / 180;
 
-              // Pre-find and lock the star (point camera but keep wide FOV)
               if (options.targetStarId) {
                 prefindRequestedRef.current = options.targetStarId;
                 prefindStar(stel, options.targetStarId);
               } else {
                 setStarReady(true);
               }
-
             } catch (e) {
               console.warn("⚠️ Engine setup error:", e);
             }
@@ -155,17 +181,20 @@ export function useStellariumEngine(
           },
           onError: () => {
             clearInterval(progressInterval);
+            clearTimeout(timeoutId);
             setEngineError("تعذّر تهيئة محرك النجوم.");
           },
         });
       } catch (e: any) {
         clearInterval(progressInterval);
+        clearTimeout(timeoutId);
         setEngineError(e.message || "خطأ غير متوقع");
       }
     };
 
     script.onerror = () => {
       clearInterval(progressInterval);
+      clearTimeout(timeoutId);
       setEngineError("تعذّر تحميل ملف stellarium-web-engine.js");
     };
 
@@ -173,12 +202,13 @@ export function useStellariumEngine(
 
     return () => {
       clearInterval(progressInterval);
+      clearTimeout(timeoutId);
       window.removeEventListener("resize", resize);
       if (script.parentNode) script.parentNode.removeChild(script);
+      initGuardRef.current = false;
     };
-  }, []);
+  }, [engineKey]);
 
-  /** Find the star and point camera at it, but don't zoom yet */
   const prefindStar = useCallback((stel: any, starId: string) => {
     const core = stel.core;
     const formattedId = starId.replace(/([A-Za-z]+)(\d+)/, "$1 $2");
@@ -186,7 +216,7 @@ export function useStellariumEngine(
     const trySearch = (attempts: number) => {
       if (attempts <= 0) {
         console.warn("⚠️ Could not find star:", starId);
-        setStarReady(true); // proceed anyway
+        setStarReady(true);
         return;
       }
 
@@ -204,7 +234,6 @@ export function useStellariumEngine(
         try {
           core.selection = obj;
           core.lock = obj;
-          // Keep wide FOV — zoom will happen cinematically later
         } catch (e) {
           console.warn("⚠️ Error selecting star:", e);
         }
@@ -234,7 +263,6 @@ export function useStellariumEngine(
     prefindStar(stel, targetId);
   }, [options.targetStarId, prefindStar]);
 
-  /** Cinematic zoom: smoothly animate FOV from current to target */
   const cinematicZoomToStar = useCallback((targetFovDeg = 0.5, durationMs = 3000) => {
     const core = stelRef.current?.core;
     if (!core) return;
@@ -246,12 +274,10 @@ export function useStellariumEngine(
     const animate = (now: number) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / durationMs, 1);
-      // Ease-in-out cubic for smooth cinematic feel
       const eased = progress < 0.5
         ? 4 * progress * progress * progress
         : 1 - Math.pow(-2 * progress + 2, 3) / 2;
 
-      // Logarithmic interpolation for natural zoom feel
       const logStart = Math.log(startFov);
       const logEnd = Math.log(endFov);
       core.fov = Math.exp(logStart + (logEnd - logStart) * eased);

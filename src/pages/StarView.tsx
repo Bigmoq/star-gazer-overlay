@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useKey } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { findByCode, type StarRecord } from "@/lib/starStore";
 import { extractStarIdFromUrl } from "@/lib/stellariumParser";
@@ -7,7 +7,7 @@ import StarMarker from "@/components/StarMarker";
 import StarMessage from "@/components/StarMessage";
 import StarIntro from "@/components/StarIntro";
 import { useStellariumEngine } from "@/hooks/useStellariumEngine";
-import { ArrowRight, LocateFixed, Loader2, Star } from "lucide-react";
+import { ArrowRight, LocateFixed, Loader2, Star, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -16,71 +16,68 @@ const StarView = () => {
   const navigate = useNavigate();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [star, setStar] = useState<StarRecord | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [introDone, setIntroDone] = useState(false); // Show intro first!
+  const [dataLoading, setDataLoading] = useState(true);
+  const [dataError, setDataError] = useState(false);
+  const [introDone, setIntroDone] = useState(false);
   const [showMarker, setShowMarker] = useState(false);
   const [showUI, setShowUI] = useState(false);
-  const [starId, setStarId] = useState<string | undefined>();
+  const [engineKey, setEngineKey] = useState(0); // for retry
+
+  const starId = star ? extractStarIdFromUrl(star.stellariumUrl) : undefined;
 
   // Load star data
   useEffect(() => {
     let active = true;
-
     const loadStar = async () => {
-      setLoading(true);
+      setDataLoading(true);
+      setDataError(false);
       setStar(null);
-      setStarId(undefined);
 
       if (!code) {
-        if (active) setLoading(false);
+        if (active) { setDataLoading(false); setDataError(true); }
         return;
       }
 
       try {
         const decodedCode = decodeURIComponent(code);
         const data = await findByCode(decodedCode);
-
         if (!active) return;
         if (data) {
           setStar(data);
-          const id = extractStarIdFromUrl(data.stellariumUrl);
-          if (id) setStarId(id);
+        } else {
+          setDataError(true);
         }
       } catch {
-        if (active) setStar(null);
+        if (active) setDataError(true);
       } finally {
-        if (active) setLoading(false);
+        if (active) setDataLoading(false);
       }
     };
-
     loadStar();
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [code]);
 
-  // Initialize engine — deferred navigation (intro shows first)
+  // Initialize engine — canvas is ALWAYS mounted so this will work
   const {
     engineLoaded, engineError, loadingProgress,
     targetFound, starReady, goToStar, cinematicZoomToStar
   } = useStellariumEngine(canvasRef, {
-    targetStarId: starId,
+    targetStarId: starId || undefined,
     targetFov: 0.5,
     initialFov: 120,
     atmosphere: false,
     landscape: false,
     constellations: true,
     deferNavigation: true,
+    key: engineKey,
   });
 
   // When intro completes → trigger cinematic zoom
   const handleIntroComplete = useCallback(() => {
     setIntroDone(true);
-    // Start cinematic zoom after a brief moment
     setTimeout(() => {
-      cinematicZoomToStar(0.5, 4000); // 4 second smooth zoom
+      cinematicZoomToStar(0.5, 4000);
     }, 300);
-    // Show marker and UI after zoom mostly completes
     setTimeout(() => {
       setShowMarker(true);
       setShowUI(true);
@@ -101,50 +98,78 @@ const StarView = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const handleRetry = () => {
+    setIntroDone(false);
+    setShowMarker(false);
+    setShowUI(false);
+    setEngineKey(k => k + 1);
+  };
 
-  if (!star) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <p className="text-xl text-muted-foreground font-body">لم يتم العثور على النجم</p>
-          <Button variant="outline" onClick={() => navigate("/")}>
-            <ArrowRight className="w-4 h-4 ml-2" />
-            العودة للبحث
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // Determine what overlay to show
+  const showDataLoading = dataLoading;
+  const showNotFound = !dataLoading && dataError;
+  const showEngineLoading = !dataLoading && !dataError && star && !engineLoaded;
+  const showIntro = !dataLoading && !dataError && star && engineLoaded && !introDone;
+  const showStarUI = !dataLoading && !dataError && star && engineLoaded && introDone && showUI;
 
-  const panelData = {
+  const panelData = star ? {
     customName: star.customName,
     originalName: star.originalName,
     magnitude: star.magnitude,
     distance: star.distance,
     spectralClass: star.spectralClass,
     constellation: star.constellation,
-  };
+  } : null;
 
   return (
     <div className="relative w-screen h-[100dvh] overflow-hidden bg-background">
-      {/* ─── Full-Screen Canvas ─── */}
+      {/* ─── Canvas is ALWAYS mounted ─── */}
       <canvas
         ref={canvasRef}
         className="absolute inset-0 w-full h-full outline-none"
         tabIndex={0}
       />
 
-      {/* ─── Loading Screen (before engine loads) ─── */}
+      {/* ─── Data Loading Overlay ─── */}
       <AnimatePresence>
-        {!engineLoaded && (
+        {showDataLoading && (
           <motion.div
+            key="data-loading"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="absolute inset-0 z-50 flex items-center justify-center bg-background"
+          >
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Not Found Overlay ─── */}
+      <AnimatePresence>
+        {showNotFound && (
+          <motion.div
+            key="not-found"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 z-50 flex items-center justify-center bg-background"
+          >
+            <div className="text-center space-y-4">
+              <p className="text-xl text-muted-foreground font-body">لم يتم العثور على النجم</p>
+              <Button variant="outline" onClick={() => navigate("/")}>
+                <ArrowRight className="w-4 h-4 ml-2" />
+                العودة للبحث
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Engine Loading Overlay ─── */}
+      <AnimatePresence>
+        {showEngineLoading && (
+          <motion.div
+            key="engine-loading"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.8 }}
@@ -169,7 +194,7 @@ const StarView = () => {
                 <h2 className="text-xl font-display font-bold text-foreground" dir="rtl">
                   جارٍ تحميل نجمك
                 </h2>
-                <p className="text-sm font-body text-muted-foreground">{star.customName} ✨</p>
+                <p className="text-sm font-body text-muted-foreground">{star!.customName} ✨</p>
               </div>
               <div className="w-64 h-1.5 rounded-full overflow-hidden" style={{ background: "hsl(var(--secondary))" }}>
                 <motion.div
@@ -181,22 +206,28 @@ const StarView = () => {
                 />
               </div>
               {engineError && (
-                <motion.p
+                <motion.div
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-sm text-destructive font-body text-center max-w-xs" dir="rtl"
+                  className="flex flex-col items-center gap-3"
                 >
-                  {engineError}
-                </motion.p>
+                  <p className="text-sm text-destructive font-body text-center max-w-xs" dir="rtl">
+                    {engineError}
+                  </p>
+                  <Button variant="outline" size="sm" onClick={handleRetry}>
+                    <RefreshCw className="w-4 h-4 ml-1" />
+                    إعادة المحاولة
+                  </Button>
+                </motion.div>
               )}
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ─── Cinematic Intro (name + message + date) ─── */}
+      {/* ─── Cinematic Intro ─── */}
       <AnimatePresence>
-        {engineLoaded && !introDone && (
+        {showIntro && star && (
           <StarIntro
             name={star.customName}
             message={star.message}
@@ -209,9 +240,8 @@ const StarView = () => {
 
       {/* ─── Star View UI (appears after zoom) ─── */}
       <AnimatePresence>
-        {introDone && showUI && (
+        {showStarUI && star && panelData && (
           <>
-            {/* Top buttons */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -239,7 +269,6 @@ const StarView = () => {
               </Button>
             </motion.div>
 
-            {/* Hint toast */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: [0, 0.7, 0.7, 0] }}
@@ -254,12 +283,10 @@ const StarView = () => {
               </div>
             </motion.div>
 
-            {/* Star marker */}
             <AnimatePresence>
               {showMarker && <StarMarker name={star.customName} visible={showMarker} />}
             </AnimatePresence>
 
-            {/* Info panel + message */}
             <StarInfoPanel star={panelData} />
             <StarMessage message={star.message} date={star.date} />
           </>
