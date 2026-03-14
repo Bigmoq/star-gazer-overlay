@@ -336,11 +336,14 @@ const StellariumNative = () => {
               try {
                 const core = stelRef.current?.core;
                 if (!core) return;
-                const fovRad = core.fov;
-                if (fovRad !== undefined) {
-                  const fovDeg = (fovRad * 180) / Math.PI;
+                
+                // The value is ALREADY in degrees!
+                const fovDeg = core.fov; 
+                
+                if (fovDeg !== undefined) {
                   setFov(fovDeg);
                   
+                  // Trigger DSS when zoomed in below 5 degrees
                   if (fovDeg < 5) {
                     let raDeg = 0;
                     let decDeg = 0;
@@ -349,25 +352,19 @@ const StellariumNative = () => {
                     const centerPos = core.getPointForCanvasPos?.([canvasRef.current!.width / 2, canvasRef.current!.height / 2]);
                     
                     if (centerPos && stelRef.current?.convertFrame) {
-                      const radec = stelRef.current.convertFrame(obs, "OBSERVED", "ICRF", centerPos);
-                      const c = stelRef.current.c2s(radec);
-                      raDeg = ((stelRef.current.anp(c[0]) * 180) / Math.PI);
-                      decDeg = ((stelRef.current.anpm(c[1]) * 180) / Math.PI);
-                    } else {
-                      // FALLBACK: try viewing direction J2000 directly
-                      const viewDir = core.getViewDirectionJ2000?.();
-                      if (viewDir && stelRef.current?.c2s) {
-                        const c = stelRef.current.c2s(viewDir);
-                        raDeg = ((stelRef.current.anp(c[0]) * 180) / Math.PI);
-                        decDeg = ((stelRef.current.anpm(c[1]) * 180) / Math.PI);
-                      }
+                         const radec = stelRef.current.convertFrame(obs, "OBSERVED", "ICRF", centerPos);
+                         const c = stelRef.current.c2s(radec);
+                         // These usually DO need radian-to-degree conversion
+                         raDeg = ((stelRef.current.anp(c[0]) * 180) / Math.PI);
+                         decDeg = ((stelRef.current.anpm(c[1]) * 180) / Math.PI);
                     }
-                    
                     if (raDeg !== 0 || decDeg !== 0) {
-                      const url = `https://alasky.u-strasbg.fr/hips-image-services/hips2fits?hips=DSS2/color&width=800&height=600&fov=${fovDeg}&ra=${raDeg}&dec=${decDeg}&projection=TAN&format=jpg`;
-                      console.log("Fetching DSS overlay:", url);
-                      setDssUrl(url);
-                      setDssOpacity(Math.min(1, (5 - fovDeg) / 3));
+                        const url = `https://alasky.u-strasbg.fr/hips-image-services/hips2fits?hips=DSS2/color&width=800&height=600&fov=${fovDeg}&ra=${raDeg}&dec=${decDeg}&projection=TAN&format=jpg`;
+                        if (dssUrl !== url) {
+                           setDssUrl(url);
+                        }
+                        // Fade in smoothly as you zoom from 5 deg down to 0
+                        setDssOpacity(Math.min(1, (5 - fovDeg) / 3));
                     }
                   } else {
                     setDssUrl(null);
@@ -375,7 +372,7 @@ const StellariumNative = () => {
                   }
                 }
               } catch (e) {
-                console.error("DSS Overlay Math Error:", e);
+                  console.error("DSS Overlay Math Error:", e);
               }
             }, 500);
             // Store interval for cleanup
