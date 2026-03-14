@@ -30,6 +30,8 @@ interface DbRow {
   constellation: string;
   stellarium_url: string;
   created_at: string;
+  ra_rad: number | null;
+  dec_rad: number | null;
 }
 
 function rowToStar(row: DbRow): StarRecord {
