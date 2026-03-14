@@ -160,11 +160,7 @@ const StellariumNative = () => {
                 key: "gaia",
               }, "Stars Gaia (bright + faint)");
 
-              // Keep proxy extended survey as fallback (mainly faint stars).
-              addDataSourceCompat(core.stars, {
-                url: DATA_BASE_URL + "stars",
-                key: "extended",
-              }, "Stars proxy extended");
+              // stars base pack removed — returns 403 on tiles
 
               addDataSourceCompat(core.stars, {
                 url: DATA_BASE_URL + "stars-extended",
