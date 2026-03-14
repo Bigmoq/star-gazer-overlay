@@ -530,6 +530,21 @@ const StellariumNative = () => {
         tabIndex={0}
       />
 
+      {/* DSS Real Sky Overlay */}
+      {dssUrl && dssOpacity > 0 && (
+        <img
+          src={dssUrl}
+          alt="DSS Sky"
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          style={{
+            opacity: dssOpacity * 0.7,
+            mixBlendMode: "screen",
+            zIndex: 5,
+            transition: "opacity 0.5s ease",
+          }}
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+        />
+      )}
 
       {/* ─── Loading Overlay ─── */}
       <AnimatePresence>
