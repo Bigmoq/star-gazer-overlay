@@ -13,6 +13,8 @@ export interface StarRecord {
   constellation: string;
   stellariumUrl: string;
   createdAt: string;
+  raRad: number | null;
+  decRad: number | null;
 }
 
 interface DbRow {
