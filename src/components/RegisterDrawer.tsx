@@ -57,32 +57,42 @@ const RegisterDrawer = ({ onRegistered, onNavigate }: RegisterDrawerProps) => {
     setLoading(true);
     setTaken(false);
 
-    // Check if star is already taken
-    const existing = await findByCode(starId);
-    if (existing) {
-      setTaken(true);
-      setTakenBy(existing.customName);
-      setLoading(false);
-      return;
-    }
-
-    // Fetch star data
-    setForm((f) => ({ ...f, code: starId, stellariumUrl: fullUrl }));
-
     try {
-      const data = await fetchStarData(starId);
-      if (data) {
-        setForm((f) => ({
-          ...f,
-          originalName: data.originalName || starId,
-          magnitude: data.magnitude ? String(data.magnitude) : "",
-          spectralClass: data.spectralClass || "",
-        }));
+      // Check if star is already taken
+      const existing = await findByCode(starId);
+      if (existing) {
+        setTaken(true);
+        setTakenBy(existing.customName);
+        return;
       }
-    } catch { /* silent */ }
 
-    setLoading(false);
-    setStep("form");
+      // Fetch star data
+      setForm((f) => ({ ...f, code: starId, stellariumUrl: fullUrl }));
+
+      try {
+        const data = await fetchStarData(starId);
+        if (data) {
+          setForm((f) => ({
+            ...f,
+            originalName: data.originalName || starId,
+            magnitude: data.magnitude ? String(data.magnitude) : "",
+            spectralClass: data.spectralClass || "",
+          }));
+        }
+      } catch {
+        // keep form usable even if metadata lookup fails
+      }
+
+      setStep("form");
+    } catch {
+      toast({
+        title: "تعذّر التحقق من النجم",
+        description: "تحقق من الاتصال ثم حاول مرة أخرى",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   }, [onNavigate]);
 
   const handleRegister = async () => {

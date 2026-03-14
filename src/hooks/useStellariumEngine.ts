@@ -25,6 +25,7 @@ export function useStellariumEngine(
   options: UseEngineOptions = {}
 ) {
   const stelRef = useRef<any>(null);
+  const prefindRequestedRef = useRef<string | null>(null);
   const [engineLoaded, setEngineLoaded] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -140,7 +141,10 @@ export function useStellariumEngine(
 
               // Pre-find and lock the star (point camera but keep wide FOV)
               if (options.targetStarId) {
+                prefindRequestedRef.current = options.targetStarId;
                 prefindStar(stel, options.targetStarId);
+              } else {
+                setStarReady(true);
               }
 
             } catch (e) {
@@ -212,6 +216,23 @@ export function useStellariumEngine(
 
     setTimeout(() => trySearch(10), 2000);
   }, []);
+
+  useEffect(() => {
+    const targetId = options.targetStarId;
+    const stel = stelRef.current;
+
+    if (!stel) return;
+    if (!targetId) {
+      setStarReady(true);
+      return;
+    }
+
+    if (prefindRequestedRef.current === targetId) return;
+
+    prefindRequestedRef.current = targetId;
+    setStarReady(false);
+    prefindStar(stel, targetId);
+  }, [options.targetStarId, prefindStar]);
 
   /** Cinematic zoom: smoothly animate FOV from current to target */
   const cinematicZoomToStar = useCallback((targetFovDeg = 0.5, durationMs = 3000) => {

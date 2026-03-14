@@ -24,15 +24,39 @@ const StarView = () => {
 
   // Load star data
   useEffect(() => {
-    if (!code) { setLoading(false); return; }
-    findByCode(decodeURIComponent(code)).then((data) => {
-      if (data) {
-        setStar(data);
-        const id = extractStarIdFromUrl(data.stellariumUrl);
-        if (id) setStarId(id);
+    let active = true;
+
+    const loadStar = async () => {
+      setLoading(true);
+      setStar(null);
+      setStarId(undefined);
+
+      if (!code) {
+        if (active) setLoading(false);
+        return;
       }
-      setLoading(false);
-    });
+
+      try {
+        const decodedCode = decodeURIComponent(code);
+        const data = await findByCode(decodedCode);
+
+        if (!active) return;
+        if (data) {
+          setStar(data);
+          const id = extractStarIdFromUrl(data.stellariumUrl);
+          if (id) setStarId(id);
+        }
+      } catch {
+        if (active) setStar(null);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    loadStar();
+    return () => {
+      active = false;
+    };
   }, [code]);
 
   // Initialize engine — deferred navigation (intro shows first)
