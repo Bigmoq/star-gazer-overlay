@@ -33,6 +33,8 @@ interface UseEngineOptions {
   constellations?: boolean;
   deferNavigation?: boolean;
   key?: number;
+  fallbackRaRad?: number;
+  fallbackDecRad?: number;
 }
 
 function pad(n: number, len = 2): string {
