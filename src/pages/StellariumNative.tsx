@@ -546,12 +546,11 @@ const StellariumNative = () => {
           alt="DSS Sky"
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
           style={{
-            opacity: dssOpacity * 0.7,
+            opacity: dssOpacity * 0.8,
             mixBlendMode: "screen",
-            zIndex: 5,
-            transition: "opacity 0.5s ease",
+            zIndex: 10,
+            transition: "opacity 0.3s ease-in-out",
           }}
-          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
       )}
 
