@@ -331,15 +331,44 @@ const StellariumNative = () => {
 
             setTimeout(() => setEngineLoaded(true), 500);
 
-            // Track FOV changes
+            // Track FOV + DSS overlay
             const fovInterval = setInterval(() => {
               try {
-                const fovRad = stelRef.current?.core?.fov;
+                const core = stelRef.current?.core;
+                if (!core) return;
+                const fovRad = core.fov;
                 if (fovRad !== undefined) {
-                  setFov((fovRad * 180) / Math.PI);
+                  const fovDeg = (fovRad * 180) / Math.PI;
+                  setFov(fovDeg);
+                  
+                  // When zoomed in enough (< 5°), show DSS real sky image
+                  if (fovDeg < 5) {
+                    try {
+                      const obs = core.observer;
+                      const center = core.getPointForCanvasPos?.(
+                        [canvasRef.current!.width / 2, canvasRef.current!.height / 2]
+                      );
+                      if (center) {
+                        const radec = stelRef.current.convertFrame(obs, "OBSERVED", "ICRF", center);
+                        const c = stelRef.current.c2s(radec);
+                        const raDeg = ((stelRef.current.anp(c[0]) * 180) / Math.PI);
+                        const decDeg = ((stelRef.current.anpm(c[1]) * 180) / Math.PI);
+                        
+                        const hipsWidth = 800;
+                        const hipsHeight = 600;
+                        const url = `https://alasky.u-strasbg.fr/hips-image-services/hips2fits?hips=DSS2/color&width=${hipsWidth}&height=${hipsHeight}&fov=${fovDeg}&ra=${raDeg}&dec=${decDeg}&projection=TAN&format=jpg`;
+                        
+                        setDssUrl(url);
+                        setDssOpacity(Math.min(1, (5 - fovDeg) / 3));
+                      }
+                    } catch(e) { /* ignore coordinate errors */ }
+                  } else {
+                    setDssUrl(null);
+                    setDssOpacity(0);
+                  }
                 }
               } catch {}
-            }, 300);
+            }, 500);
             // Store interval for cleanup
             (window as any).__fovInterval = fovInterval;
           },
