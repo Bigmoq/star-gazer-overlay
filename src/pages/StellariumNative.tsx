@@ -353,7 +353,6 @@ const StellariumNative = () => {
 
     return () => {
       clearInterval(progressInterval);
-      clearInterval((window as any).__fovInterval);
       window.removeEventListener("resize", resize);
       if (script.parentNode) script.parentNode.removeChild(script);
     };
