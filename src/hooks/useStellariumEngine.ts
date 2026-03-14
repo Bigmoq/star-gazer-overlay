@@ -334,6 +334,29 @@ export function useStellariumEngine(
           console.warn("⚠️ Error selecting star:", e);
         }
         setStarReady(true);
+      } else if (attempts <= 1) {
+        // Fallback: navigate by coordinates if available
+        if (options.fallbackRaRad != null && options.fallbackDecRad != null) {
+          console.log("📍 Using coordinate fallback for navigation");
+          try {
+            const ra = options.fallbackRaRad;
+            const dec = options.fallbackDecRad;
+            // Convert RA/Dec to a3d vector for lookat
+            const x = Math.cos(dec) * Math.cos(ra);
+            const y = Math.cos(dec) * Math.sin(ra);
+            const z = Math.sin(dec);
+            if (core.lookat) {
+              core.lookat([x, y, z], 2.0);
+            } else {
+              // Manual azalt approach
+              core.observer.yaw = ra;
+              core.observer.pitch = dec;
+            }
+          } catch (e) {
+            console.warn("⚠️ Coordinate fallback failed:", e);
+          }
+        }
+        setStarReady(true);
       } else {
         setTimeout(() => trySearch(attempts - 1), 2000);
       }
