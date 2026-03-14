@@ -81,6 +81,8 @@ export function useStellariumEngine(
 
       let raStr = "—";
       let decStr = "—";
+      let raRad = 0;
+      let decRad = 0;
       try {
         const obs = stel.core.observer;
         const radec = obj.getInfo?.("radec");
@@ -89,6 +91,8 @@ export function useStellariumEngine(
           const c = stel.c2s(cirs);
           const ra = stel.anp(c[0]);
           const dec = stel.anpm(c[1]);
+          raRad = ra;
+          decRad = dec;
           const raf = stel.a2tf(ra, 1);
           const daf = stel.a2af(dec, 1);
           raStr = `${pad(raf.hours)}h ${pad(raf.minutes)}m ${pad(raf.seconds)}.${raf.fraction}s`;
@@ -96,7 +100,30 @@ export function useStellariumEngine(
         }
       } catch { /* fallback */ }
 
-      setClickedStar({ name, identifier, magnitude: magStr, ra: raStr, dec: decStr });
+      // Extract additional metadata from engine
+      let distance = "";
+      let spectralClass = "";
+      let constellation = "";
+
+      try {
+        const distPc = obj.getInfo?.("distance");
+        if (distPc && distPc > 0) {
+          const distLy = (distPc * 3.26156).toFixed(1);
+          distance = `${distLy} سنة ضوئية`;
+        }
+      } catch {}
+
+      try {
+        spectralClass = obj.getInfo?.("spect-type") || obj.getInfo?.("spectral_type") || "";
+      } catch {}
+
+      try {
+        constellation = obj.getInfo?.("constellation") || obj.getInfo?.("cst") || "";
+      } catch {}
+
+      console.log("⭐ Star metadata:", { name, identifier, distance, spectralClass, constellation, raRad, decRad });
+
+      setClickedStar({ name, identifier, magnitude: magStr, ra: raStr, dec: decStr, distance, spectralClass, constellation, raRad, decRad });
     } catch (e) {
       console.warn("Error reading star info:", e);
     }
