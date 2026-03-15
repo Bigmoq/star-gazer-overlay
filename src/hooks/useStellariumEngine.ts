@@ -54,8 +54,7 @@ export function useStellariumEngine(
   const [targetFound, setTargetFound] = useState(false);
   const [starReady, setStarReady] = useState(false);
   const [clickedStar, setClickedStar] = useState<ClickedStarInfo | null>(null);
-
-  const engineKey = options.key ?? 0;
+  const cinematicZoomRef = useRef<(fov: number, dur: number) => void>(() => {});
 
   const handleStarSelected = useCallback((stel: any, obj: any) => {
     try {
