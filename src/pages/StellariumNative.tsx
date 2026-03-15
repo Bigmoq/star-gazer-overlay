@@ -736,6 +736,17 @@ const StellariumNative = () => {
         />
       )}
 
+      {/* Star Marker for faint stars found via SIMBAD */}
+      <AnimatePresence>
+        {starMarker && (
+          <StarMarkerOverlay
+            starMarker={starMarker}
+            canvasRef={canvasRef}
+            stelRef={stelRef}
+          />
+        )}
+      </AnimatePresence>
+
       {/* ─── Loading Overlay ─── */}
       <AnimatePresence>
         {!engineLoaded && (
