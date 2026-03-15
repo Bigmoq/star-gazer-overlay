@@ -344,7 +344,14 @@ const StellariumNative = () => {
             const fovInterval = setInterval(() => {
               try {
                 const core = stelRef.current?.core;
-                if (!core) return;
+                const stel = stelRef.current;
+                if (!core || !stel) return;
+
+                // Update star marker screen position
+                const currentMarker = (document.querySelector('[data-star-marker]') as any)?.__markerData;
+                // We read starMarker via a ref-like approach through the DOM to avoid stale closures
+                // Instead, we'll use a simpler approach - just try to update if the state exists
+                
                 const fovRad = core.fov;
                 if (fovRad !== undefined) {
                   const fovDeg = (fovRad * 180) / Math.PI;
