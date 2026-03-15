@@ -90,6 +90,7 @@ Deno.serve(async (req) => {
         dec_deg: decDeg,
         vmag: vmag != null ? vmag.toFixed(2) : null,
         hip,
+        gaia_id: gaiaId,
         aliases,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
