@@ -470,54 +470,63 @@ const StellariumNative = () => {
 
     try {
       let obj = null;
+      const q = query.trim();
 
-      // Try multiple API methods to find the object
-      if (!obj && typeof core.getObj === "function") {
-        try { obj = core.getObj(query.trim()); } catch {}
+      // Stellarium WASM uses "NAME X" convention for common names
+      const variants = [
+        q,
+        `NAME ${q}`,
+        q.replace(/([A-Za-z]+)(\d+)/, "$1 $2"),  // "HIP32349" → "HIP 32349"
+        `NAME ${q.replace(/([A-Za-z]+)(\d+)/, "$1 $2")}`,
+      ];
+
+      // stel.getObj is the primary API (confirmed available in this WASM build)
+      for (const v of variants) {
+        if (obj) break;
+        try { obj = stel.getObj(v); } catch {}
       }
-      if (!obj && typeof core.getObjByName === "function") {
-        try { obj = core.getObjByName(query.trim()); } catch {}
+
+      // Fallback: try core.search (may exist as proxy property)
+      if (!obj) {
+        for (const v of variants) {
+          if (obj) break;
+          try { obj = core.search?.(v); } catch {}
+        }
       }
-      if (!obj && typeof stel.getObj === "function") {
-        try { obj = stel.getObj(query.trim()); } catch {}
-      }
-      if (!obj && typeof stel.getObjByNSID === "function") {
-        try { obj = stel.getObjByNSID(query.trim()); } catch {}
-      }
-      // Try core.search (used in useStellariumEngine hook)
-      if (!obj && typeof core.search === "function") {
-        try { obj = core.search(query.trim()); } catch {}
-      }
+
+      console.log("🔍 Search attempts for:", q, "→ obj:", obj);
 
       if (obj) {
-        // Select the object
+        // Select the object (triggers change listener)
         core.selection = obj;
 
-        // Navigate camera to the object
-        if (typeof core.pointAndLock === "function") {
-          core.pointAndLock(obj, 0.5);
-          setTimeout(() => { core.fov = (2 * Math.PI) / 180; }, 600);
-          console.log("✅ Search: pointAndLock to", query);
-        } else if (typeof core.lookat === "function") {
-          core.lookat(obj, 0.5);
-          setTimeout(() => { core.fov = (2 * Math.PI) / 180; }, 600);
-          console.log("✅ Search: lookat to", query);
-        } else if (typeof core.zoomTo === "function") {
-          core.zoomTo((2 * Math.PI) / 180, 0.5);
-          console.log("✅ Search: zoomTo for", query);
-        } else {
-          setTimeout(() => { core.fov = (5 * Math.PI) / 180; }, 300);
-          console.log("✅ Search: selection set for", query);
+        // Navigate using stel-level APIs (confirmed: stel.pointAndLock, stel.lookAt, stel.zoomTo)
+        try {
+          stel.pointAndLock(obj, 1.0);
+          setTimeout(() => {
+            stel.zoomTo((2 * Math.PI) / 180, 1.0);
+          }, 500);
+          console.log("✅ Search: pointAndLock + zoomTo for", q);
+        } catch (navErr) {
+          console.warn("⚠️ pointAndLock failed, trying lookAt:", navErr);
+          try {
+            const radec = obj.getInfo?.("radec");
+            if (radec) {
+              stel.lookAt(radec, 1.0);
+              setTimeout(() => { stel.zoomTo((2 * Math.PI) / 180, 1.0); }, 500);
+            }
+          } catch {
+            // Last resort: just zoom
+            try { stel.zoomTo((5 * Math.PI) / 180, 1.0); } catch {}
+          }
         }
 
         setSearchOpen(false);
         setSearchQuery("");
         handleStarSelected(stel, obj);
       } else {
-        setSearchError("لم يُعثر على هذا النجم. جرّب أسماء مثل: Sirius, Vega, M42, Jupiter");
-        console.warn("❌ Search: object not found:", query);
-        console.log("Available core methods:", Object.keys(core).filter(k => typeof core[k] === 'function'));
-        console.log("Available stel methods:", Object.keys(stel).filter(k => typeof stel[k] === 'function'));
+        setSearchError("لم يُعثر على هذا الجرم. جرّب: Sirius, HIP 32349, M42, Jupiter");
+        console.warn("❌ Search: object not found:", q);
       }
     } catch (e: any) {
       console.error("Search error:", e);
