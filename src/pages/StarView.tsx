@@ -116,6 +116,27 @@ const StarView = () => {
   const showIntro = !dataLoading && !dataError && star && engineLoaded && !introDone;
   const showStarUI = !dataLoading && !dataError && star && engineLoaded && introDone && showUI;
 
+  // Format RA/Dec from radians
+  const formatRa = (rad: number | null): string | undefined => {
+    if (rad == null) return undefined;
+    const totalHours = (rad * 12) / Math.PI;
+    const h = Math.floor(totalHours);
+    const m = Math.floor((totalHours - h) * 60);
+    const s = ((totalHours - h - m / 60) * 3600).toFixed(1);
+    return `${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m ${s}s`;
+  };
+
+  const formatDec = (rad: number | null): string | undefined => {
+    if (rad == null) return undefined;
+    const deg = (rad * 180) / Math.PI;
+    const sign = deg >= 0 ? "+" : "-";
+    const absDeg = Math.abs(deg);
+    const d = Math.floor(absDeg);
+    const arcm = Math.floor((absDeg - d) * 60);
+    const arcs = ((absDeg - d - arcm / 60) * 3600).toFixed(1);
+    return `${sign}${String(d).padStart(2, "0")}° ${String(arcm).padStart(2, "0")}' ${arcs}"`;
+  };
+
   const panelData = star ? {
     customName: star.customName,
     originalName: star.originalName,
@@ -123,6 +144,8 @@ const StarView = () => {
     distance: star.distance,
     spectralClass: star.spectralClass,
     constellation: star.constellation,
+    ra: formatRa(star.raRad),
+    dec: formatDec(star.decRad),
   } : null;
 
   return (
