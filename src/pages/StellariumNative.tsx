@@ -81,6 +81,8 @@ const StellariumNative = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [starMarker, setStarMarker] = useState<{ra: number, dec: number, name: string} | null>(null);
+  const [markerScreenPos, setMarkerScreenPos] = useState<{x: number, y: number} | null>(null);
 
   /* ─── Load & Initialize the Stellarium WASM Engine ─── */
   useEffect(() => {
