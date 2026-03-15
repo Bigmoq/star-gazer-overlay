@@ -420,6 +420,7 @@ const StellariumNative = () => {
   /* ─── Handle star selection from the engine ─── */
   const handleStarSelected = useCallback((stel: any, obj: any) => {
     try {
+      setStarMarker(null); // Clear marker when selecting a star normally
       const designations = obj.designations?.() || [];
       let name = designations[0] || obj.name || "Unknown";
       name = name.replace(/^NAME /, "");
