@@ -471,7 +471,7 @@ const StellariumNative = () => {
   }, []);
 
   /* ─── Search for a star/object by name ─── */
-  const handleSearch = useCallback((query: string) => {
+  const handleSearch = useCallback(async (query: string) => {
     const stel = stelRef.current;
     const core = stel?.core;
     if (!stel || !core || !query.trim()) return;
@@ -480,65 +480,112 @@ const StellariumNative = () => {
     setSearchError(null);
 
     try {
-      let obj = null;
       const q = query.trim();
+      let obj = null;
+      let foundViaEngine = false;
 
-      // Stellarium WASM uses "NAME X" convention for common names
-      const variants = [
-        q,
+      // ── Step 1: Try finding in WASM engine first (fast, for bright objects) ──
+      const nameVariants = [
         `NAME ${q}`,
-        q.replace(/([A-Za-z]+)(\d+)/, "$1 $2"),  // "HIP32349" → "HIP 32349"
-        `NAME ${q.replace(/([A-Za-z]+)(\d+)/, "$1 $2")}`,
+        q,
+        q.toUpperCase(),
+        `HIP ${q.replace(/^HIP\s*/i, '')}`,
+        `HD ${q.replace(/^HD\s*/i, '')}`,
+        `NGC ${q.replace(/^NGC\s*/i, '')}`,
+        `M ${q.replace(/^M\s*/i, '')}`,
       ];
 
-      // stel.getObj is the primary API (confirmed available in this WASM build)
-      for (const v of variants) {
-        if (obj) break;
-        try { obj = stel.getObj(v); } catch {}
+      // Arabic name lookup
+      const arabicMap: Record<string, string> = {
+        "سيريوس": "Sirius", "الشعرى": "Sirius", "النسر الواقع": "Vega",
+        "النسر الطائر": "Altair", "رجل الجبار": "Rigel", "الدبران": "Aldebaran",
+        "قلب العقرب": "Antares", "المنكب": "Betelgeuse", "نجم الشمال": "Polaris",
+        "المشتري": "Jupiter", "زحل": "Saturn", "المريخ": "Mars",
+        "الزهرة": "Venus", "القمر": "Moon", "الثريا": "M 45",
+        "سديم الجبار": "M 42",
+      };
+      if (arabicMap[q]) {
+        nameVariants.unshift(`NAME ${arabicMap[q]}`);
+        nameVariants.unshift(arabicMap[q]);
       }
 
-      // Fallback: try core.search (may exist as proxy property)
-      if (!obj) {
-        for (const v of variants) {
-          if (obj) break;
-          try { obj = core.search?.(v); } catch {}
-        }
-      }
-
-      console.log("🔍 Search attempts for:", q, "→ obj:", obj);
-
-      if (obj) {
-        // Select the object (triggers change listener)
-        core.selection = obj;
-
-        // Navigate using stel-level APIs (confirmed: stel.pointAndLock, stel.lookAt, stel.zoomTo)
+      for (const variant of nameVariants) {
         try {
-          stel.pointAndLock(obj, 1.0);
-          setTimeout(() => {
-            stel.zoomTo((2 * Math.PI) / 180, 1.0);
-          }, 500);
-          console.log("✅ Search: pointAndLock + zoomTo for", q);
-        } catch (navErr) {
-          console.warn("⚠️ pointAndLock failed, trying lookAt:", navErr);
-          try {
-            const radec = obj.getInfo?.("radec");
-            if (radec) {
-              stel.lookAt(radec, 1.0);
-              setTimeout(() => { stel.zoomTo((2 * Math.PI) / 180, 1.0); }, 500);
-            }
-          } catch {
-            // Last resort: just zoom
-            try { stel.zoomTo((5 * Math.PI) / 180, 1.0); } catch {}
+          const result = stel.getObj(variant);
+          if (result) {
+            obj = result;
+            foundViaEngine = true;
+            console.log(`✅ Engine found "${q}" as "${variant}"`);
+            break;
           }
-        }
+        } catch {}
+      }
 
+      if (obj && foundViaEngine) {
+        core.selection = obj;
+        stel.pointAndLock(obj, 1.0);
+        setTimeout(() => stel.zoomTo(2 * Math.PI / 180, 1.0), 1200);
+        handleStarSelected(stel, obj);
         setSearchOpen(false);
         setSearchQuery("");
-        handleStarSelected(stel, obj);
-      } else {
-        setSearchError("لم يُعثر على هذا الجرم. جرّب: Sirius, HIP 32349, M42, Jupiter");
-        console.warn("❌ Search: object not found:", q);
+        return;
       }
+
+      // ── Step 2: Object not in engine → query SIMBAD via our Edge Function ──
+      console.log(`🔍 Querying SIMBAD for: ${q}`);
+      const resolverUrl = `${SUPABASE_URL}/functions/v1/star-resolver?q=${encodeURIComponent(q)}`;
+      const resp = await fetch(resolverUrl);
+      const data = await resp.json();
+
+      if (!data.found) {
+        setSearchError(`لم يُعثر على "${q}" في قاعدة بيانات SIMBAD. جرّب أسماء مثل: HD 31398, Sirius, M42`);
+        return;
+      }
+
+      console.log(`✅ SIMBAD resolved: ${data.name} → RA=${data.ra_deg}° Dec=${data.dec_deg}°`);
+
+      // Try to find it in the engine using the HIP number from SIMBAD
+      if (data.hip) {
+        try {
+          obj = stel.getObj(data.hip);
+          if (obj) {
+            console.log(`✅ Found in engine via HIP: ${data.hip}`);
+            core.selection = obj;
+            stel.pointAndLock(obj, 1.0);
+            setTimeout(() => stel.zoomTo(2 * Math.PI / 180, 1.0), 1200);
+            handleStarSelected(stel, obj);
+            setSearchOpen(false);
+            setSearchQuery("");
+            return;
+          }
+        } catch {}
+      }
+
+      // ── Step 3: Navigate by RA/Dec coordinates directly ──
+      const raRad = (data.ra_deg * Math.PI) / 180;
+      const decRad = (data.dec_deg * Math.PI) / 180;
+
+      const targetICRF = stel.s2c([raRad, decRad]);
+      stel.lookAt(targetICRF, 1.0);
+      setTimeout(() => stel.zoomTo(1 * Math.PI / 180, 1.0), 1200);
+
+      // Show star info from SIMBAD data
+      setSelectedStar({
+        name: data.name || q,
+        arabicName: arabicMap[q] ? q : (data.name || q),
+        description: `${data.object_type || "كائن فلكي"} — تم العثور عليه عبر SIMBAD` +
+          (data.spectral_type ? `\nالنوع الطيفي: ${data.spectral_type}` : '') +
+          (data.aliases?.length ? `\nأسماء أخرى: ${data.aliases.slice(0, 5).join(', ')}` : ''),
+        magnitude: data.vmag || "—",
+        ra: `${(data.ra_deg / 15).toFixed(4)}h`,
+        dec: `${data.dec_deg > 0 ? '+' : ''}${data.dec_deg.toFixed(4)}°`,
+      });
+      setSidebarOpen(true);
+      setSearchOpen(false);
+      setSearchQuery("");
+
+      console.log(`✅ Navigated to ${data.name} via SIMBAD coordinates`);
+
     } catch (e: any) {
       console.error("Search error:", e);
       setSearchError("خطأ في البحث: " + e.message);

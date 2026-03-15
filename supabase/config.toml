@@ -3,3 +3,6 @@ id = "zhajybiboozrllfiplyz"
 
 [functions.stellarium-proxy]
 verify_jwt = false
+
+[functions.star-resolver]
+verify_jwt = false
