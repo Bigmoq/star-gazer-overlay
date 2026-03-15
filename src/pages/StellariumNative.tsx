@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Compass, Sun, Eye, X, Menu, Sparkles, MapPin, Layers, Moon, Mountain, Grid3X3, Telescope, Clock, PenTool } from "lucide-react";
+import { Star, Compass, Sun, Eye, X, Menu, Sparkles, MapPin, Layers, Moon, Mountain, Grid3X3, Telescope, Clock, PenTool, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 
@@ -77,6 +77,10 @@ const StellariumNative = () => {
   const [fov, setFov] = useState<number | null>(null);
   const [dssUrl, setDssUrl] = useState<string | null>(null);
   const [dssOpacity, setDssOpacity] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   /* ─── Load & Initialize the Stellarium WASM Engine ─── */
   useEffect(() => {
@@ -455,6 +459,74 @@ const StellariumNative = () => {
     }
   }, []);
 
+  /* ─── Search for a star/object by name ─── */
+  const handleSearch = useCallback((query: string) => {
+    const stel = stelRef.current;
+    const core = stel?.core;
+    if (!stel || !core || !query.trim()) return;
+
+    setIsSearching(true);
+    setSearchError(null);
+
+    try {
+      let obj = null;
+
+      // Try multiple API methods to find the object
+      if (!obj && typeof core.getObj === "function") {
+        try { obj = core.getObj(query.trim()); } catch {}
+      }
+      if (!obj && typeof core.getObjByName === "function") {
+        try { obj = core.getObjByName(query.trim()); } catch {}
+      }
+      if (!obj && typeof stel.getObj === "function") {
+        try { obj = stel.getObj(query.trim()); } catch {}
+      }
+      if (!obj && typeof stel.getObjByNSID === "function") {
+        try { obj = stel.getObjByNSID(query.trim()); } catch {}
+      }
+      // Try core.search (used in useStellariumEngine hook)
+      if (!obj && typeof core.search === "function") {
+        try { obj = core.search(query.trim()); } catch {}
+      }
+
+      if (obj) {
+        // Select the object
+        core.selection = obj;
+
+        // Navigate camera to the object
+        if (typeof core.pointAndLock === "function") {
+          core.pointAndLock(obj, 0.5);
+          setTimeout(() => { core.fov = (2 * Math.PI) / 180; }, 600);
+          console.log("✅ Search: pointAndLock to", query);
+        } else if (typeof core.lookat === "function") {
+          core.lookat(obj, 0.5);
+          setTimeout(() => { core.fov = (2 * Math.PI) / 180; }, 600);
+          console.log("✅ Search: lookat to", query);
+        } else if (typeof core.zoomTo === "function") {
+          core.zoomTo((2 * Math.PI) / 180, 0.5);
+          console.log("✅ Search: zoomTo for", query);
+        } else {
+          setTimeout(() => { core.fov = (5 * Math.PI) / 180; }, 300);
+          console.log("✅ Search: selection set for", query);
+        }
+
+        setSearchOpen(false);
+        setSearchQuery("");
+        handleStarSelected(stel, obj);
+      } else {
+        setSearchError("لم يُعثر على هذا النجم. جرّب أسماء مثل: Sirius, Vega, M42, Jupiter");
+        console.warn("❌ Search: object not found:", query);
+        console.log("Available core methods:", Object.keys(core).filter(k => typeof core[k] === 'function'));
+        console.log("Available stel methods:", Object.keys(stel).filter(k => typeof stel[k] === 'function'));
+      }
+    } catch (e: any) {
+      console.error("Search error:", e);
+      setSearchError("خطأ في البحث: " + e.message);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [handleStarSelected]);
+
   /* ─── Toggle engine features ─── */
   const toggleConstellations = useCallback(() => {
     const core = stelRef.current?.core;
@@ -624,6 +696,15 @@ const StellariumNative = () => {
           <Button
             variant="ghost"
             size="icon"
+            onClick={() => setSearchOpen(true)}
+            className="glass-panel border-glass-border/40 text-foreground hover:bg-secondary/60 w-10 h-10"
+            title="بحث عن نجم"
+          >
+            <Search className="w-5 h-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setSidebarOpen((o) => !o)}
             className="glass-panel border-glass-border/40 text-foreground hover:bg-secondary/60 w-10 h-10"
             title={sidebarOpen ? "إغلاق" : "القائمة"}
@@ -730,6 +811,75 @@ const StellariumNative = () => {
               <span>6 م</span>
               <span>12 ص</span>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Search Modal ─── */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 flex items-start justify-center pt-20"
+            onClick={() => setSearchOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: -10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: -10 }}
+              className="glass-panel rounded-2xl p-5 w-[min(90vw,400px)] shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+              dir="rtl"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <Search className="w-5 h-5 text-primary flex-shrink-0" />
+                <h3 className="text-lg font-display font-bold text-foreground">البحث في السماء</h3>
+              </div>
+
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setSearchError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSearch(searchQuery);
+                  }}
+                  placeholder="اكتب اسم نجم... مثل Sirius أو M42"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/50 text-sm font-body focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
+                  dir="ltr"
+                  autoFocus
+                />
+              </div>
+
+              {searchError && (
+                <p className="mt-3 text-xs text-destructive font-body">{searchError}</p>
+              )}
+
+              <div className="mt-4 flex gap-2 flex-wrap">
+                {["Sirius", "Vega", "Betelgeuse", "M42", "Jupiter", "Polaris", "Antares", "Aldebaran"].map((name) => (
+                  <button
+                    key={name}
+                    onClick={() => handleSearch(name)}
+                    className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-primary/20 text-xs text-foreground/70 hover:text-foreground transition-colors font-body"
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
+
+              <Button
+                onClick={() => handleSearch(searchQuery)}
+                disabled={!searchQuery.trim() || isSearching}
+                className="w-full mt-4 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-xl"
+              >
+                {isSearching ? "جارٍ البحث..." : "ابحث"}
+              </Button>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
