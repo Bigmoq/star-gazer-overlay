@@ -203,18 +203,10 @@ const StellariumNative = () => {
                 key: "sun",
               }, "Sun survey");
 
-              // ── 9. DSS (Deep Sky Survey - real photos when zooming)
-              try {
-                if (core.hips && core.hips.addDataSource) {
-                  core.hips.addDataSource({ url: DATA_BASE_URL + "surveys/dss" });
-                  console.log("✅ DSS loaded via core.hips");
-                } else {
-                  stel.addDataSource({ url: DATA_BASE_URL + "surveys/dss" });
-                  console.log("✅ DSS loaded via stel.addDataSource");
-                }
-              } catch(e: any) {
-                console.warn("⚠️ DSS not available in this WASM build:", e.message);
-              }
+              // ── 9. DSS (Deep Sky Survey - CORRECT module is core.dss, NOT core.dsos)
+              addDataSourceCompat(core.dss, {
+                url: DATA_BASE_URL + "surveys/dss",
+              }, "DSS deep sky survey");
 
               // Set observer location — try user's GPS, fallback to Riyadh
               const setDefaultLocation = () => {
@@ -484,30 +476,19 @@ const StellariumNative = () => {
       let obj = null;
       let foundViaEngine = false;
 
-      // ── Step 1: Try finding in WASM engine first (fast, for bright objects) ──
+      // Try multiple name formats that stellarium-web-engine understands
       const nameVariants = [
-        `NAME ${q}`,
-        q,
-        q.toUpperCase(),
-        `HIP ${q.replace(/^HIP\s*/i, '')}`,
-        `HD ${q.replace(/^HD\s*/i, '')}`,
-        `NGC ${q.replace(/^NGC\s*/i, '')}`,
-        `M ${q.replace(/^M\s*/i, '')}`,
+        `NAME ${q}`,           // "NAME Sirius" — proper names
+        q,                      // raw query "HD 31398"
+        `${q}`,                // as-is
+        q.toUpperCase(),        // "SIRIUS"
+        `HIP ${q.replace(/^HIP\s*/i, '')}`,   // ensure "HIP 12345" format
+        `HD ${q.replace(/^HD\s*/i, '')}`,      // ensure "HD 12345" format
+        `HR ${q.replace(/^HR\s*/i, '')}`,      // ensure "HR 1234" format
+        `NGC ${q.replace(/^NGC\s*/i, '')}`,    // ensure "NGC 1234" format
+        `M ${q.replace(/^M\s*/i, '')}`,        // ensure "M 42" format
+        `SAO ${q.replace(/^SAO\s*/i, '')}`,    // ensure "SAO 12345" format
       ];
-
-      // Arabic name lookup
-      const arabicMap: Record<string, string> = {
-        "سيريوس": "Sirius", "الشعرى": "Sirius", "النسر الواقع": "Vega",
-        "النسر الطائر": "Altair", "رجل الجبار": "Rigel", "الدبران": "Aldebaran",
-        "قلب العقرب": "Antares", "المنكب": "Betelgeuse", "نجم الشمال": "Polaris",
-        "المشتري": "Jupiter", "زحل": "Saturn", "المريخ": "Mars",
-        "الزهرة": "Venus", "القمر": "Moon", "الثريا": "M 45",
-        "سديم الجبار": "M 42",
-      };
-      if (arabicMap[q]) {
-        nameVariants.unshift(`NAME ${arabicMap[q]}`);
-        nameVariants.unshift(arabicMap[q]);
-      }
 
       for (const variant of nameVariants) {
         try {
@@ -515,10 +496,35 @@ const StellariumNative = () => {
           if (result) {
             obj = result;
             foundViaEngine = true;
-            console.log(`✅ Engine found "${q}" as "${variant}"`);
+            console.log(`✅ Found "${q}" as "${variant}"`);
             break;
           }
         } catch {}
+      }
+
+      // Also check custom Arabic names
+      if (!obj) {
+        const arabicToEnglish: Record<string, string> = {
+          "سيريوس": "Sirius", "الشعرى": "Sirius",
+          "النسر الواقع": "Vega", "النسر الطائر": "Altair",
+          "رجل الجبار": "Rigel", "الدبران": "Aldebaran",
+          "قلب العقرب": "Antares", "المنكب": "Betelgeuse",
+          "نجم الشمال": "Polaris", "الجبار": "Orion",
+          "المشتري": "Jupiter", "زحل": "Saturn",
+          "المريخ": "Mars", "الزهرة": "Venus",
+          "القمر": "Moon", "الشمس": "Sun",
+          "الثريا": "M 45", "سديم الجبار": "M 42",
+        };
+        const englishName = arabicToEnglish[q];
+        if (englishName) {
+          try {
+            obj = stel.getObj(`NAME ${englishName}`) || stel.getObj(englishName);
+            if (obj) {
+              foundViaEngine = true;
+              console.log(`✅ Arabic "${q}" → "${englishName}"`);
+            }
+          } catch {}
+        }
       }
 
       if (obj && foundViaEngine) {
@@ -572,7 +578,7 @@ const StellariumNative = () => {
       // Show star info from SIMBAD data
       setSelectedStar({
         name: data.name || q,
-        arabicName: arabicMap[q] ? q : (data.name || q),
+        arabicName: data.name || q,
         description: `${data.object_type || "كائن فلكي"} — تم العثور عليه عبر SIMBAD` +
           (data.spectral_type ? `\nالنوع الطيفي: ${data.spectral_type}` : '') +
           (data.aliases?.length ? `\nأسماء أخرى: ${data.aliases.slice(0, 5).join(', ')}` : ''),
