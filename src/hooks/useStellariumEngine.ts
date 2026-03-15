@@ -336,7 +336,7 @@ export function useStellariumEngine(
         }
         setStarReady(true);
         // Auto-zoom to the found star
-        setTimeout(() => cinematicZoomToStar(options.targetFov || 0.5, 3000), 300);
+        setTimeout(() => cinematicZoomRef.current(options.targetFov || 0.5, 3000), 300);
       } else if (attempts <= 1) {
         // Fallback: navigate by coordinates if available
         if (options.fallbackRaRad != null && options.fallbackDecRad != null) {
