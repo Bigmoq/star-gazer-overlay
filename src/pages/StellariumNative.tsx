@@ -459,6 +459,74 @@ const StellariumNative = () => {
     }
   }, []);
 
+  /* ─── Search for a star/object by name ─── */
+  const handleSearch = useCallback((query: string) => {
+    const stel = stelRef.current;
+    const core = stel?.core;
+    if (!stel || !core || !query.trim()) return;
+
+    setIsSearching(true);
+    setSearchError(null);
+
+    try {
+      let obj = null;
+
+      // Try multiple API methods to find the object
+      if (!obj && typeof core.getObj === "function") {
+        try { obj = core.getObj(query.trim()); } catch {}
+      }
+      if (!obj && typeof core.getObjByName === "function") {
+        try { obj = core.getObjByName(query.trim()); } catch {}
+      }
+      if (!obj && typeof stel.getObj === "function") {
+        try { obj = stel.getObj(query.trim()); } catch {}
+      }
+      if (!obj && typeof stel.getObjByNSID === "function") {
+        try { obj = stel.getObjByNSID(query.trim()); } catch {}
+      }
+      // Try core.search (used in useStellariumEngine hook)
+      if (!obj && typeof core.search === "function") {
+        try { obj = core.search(query.trim()); } catch {}
+      }
+
+      if (obj) {
+        // Select the object
+        core.selection = obj;
+
+        // Navigate camera to the object
+        if (typeof core.pointAndLock === "function") {
+          core.pointAndLock(obj, 0.5);
+          setTimeout(() => { core.fov = (2 * Math.PI) / 180; }, 600);
+          console.log("✅ Search: pointAndLock to", query);
+        } else if (typeof core.lookat === "function") {
+          core.lookat(obj, 0.5);
+          setTimeout(() => { core.fov = (2 * Math.PI) / 180; }, 600);
+          console.log("✅ Search: lookat to", query);
+        } else if (typeof core.zoomTo === "function") {
+          core.zoomTo((2 * Math.PI) / 180, 0.5);
+          console.log("✅ Search: zoomTo for", query);
+        } else {
+          setTimeout(() => { core.fov = (5 * Math.PI) / 180; }, 300);
+          console.log("✅ Search: selection set for", query);
+        }
+
+        setSearchOpen(false);
+        setSearchQuery("");
+        handleStarSelected(stel, obj);
+      } else {
+        setSearchError("لم يُعثر على هذا النجم. جرّب أسماء مثل: Sirius, Vega, M42, Jupiter");
+        console.warn("❌ Search: object not found:", query);
+        console.log("Available core methods:", Object.keys(core).filter(k => typeof core[k] === 'function'));
+        console.log("Available stel methods:", Object.keys(stel).filter(k => typeof stel[k] === 'function'));
+      }
+    } catch (e: any) {
+      console.error("Search error:", e);
+      setSearchError("خطأ في البحث: " + e.message);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [handleStarSelected]);
+
   /* ─── Toggle engine features ─── */
   const toggleConstellations = useCallback(() => {
     const core = stelRef.current?.core;
