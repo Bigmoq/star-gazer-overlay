@@ -696,6 +696,15 @@ const StellariumNative = () => {
           <Button
             variant="ghost"
             size="icon"
+            onClick={() => setSearchOpen(true)}
+            className="glass-panel border-glass-border/40 text-foreground hover:bg-secondary/60 w-10 h-10"
+            title="بحث عن نجم"
+          >
+            <Search className="w-5 h-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setSidebarOpen((o) => !o)}
             className="glass-panel border-glass-border/40 text-foreground hover:bg-secondary/60 w-10 h-10"
             title={sidebarOpen ? "إغلاق" : "القائمة"}
