@@ -203,18 +203,10 @@ const StellariumNative = () => {
                 key: "sun",
               }, "Sun survey");
 
-              // ── 9. DSS (Deep Sky Survey - real photos when zooming)
-              try {
-                if (core.hips && core.hips.addDataSource) {
-                  core.hips.addDataSource({ url: DATA_BASE_URL + "surveys/dss" });
-                  console.log("✅ DSS loaded via core.hips");
-                } else {
-                  stel.addDataSource({ url: DATA_BASE_URL + "surveys/dss" });
-                  console.log("✅ DSS loaded via stel.addDataSource");
-                }
-              } catch(e: any) {
-                console.warn("⚠️ DSS not available in this WASM build:", e.message);
-              }
+              // ── 9. DSS (Deep Sky Survey - CORRECT module is core.dss, NOT core.dsos)
+              addDataSourceCompat(core.dss, {
+                url: DATA_BASE_URL + "surveys/dss",
+              }, "DSS deep sky survey");
 
               // Set observer location — try user's GPS, fallback to Riyadh
               const setDefaultLocation = () => {
