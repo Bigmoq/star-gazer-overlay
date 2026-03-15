@@ -311,15 +311,26 @@ const StellariumNative = () => {
                 }
               }, 10000);
 
-              // ── Diagnostic: log star catalog status ──
-              console.log("🌟 Star source (bright+faint):", "https://data.stellarium.org/surveys/gaia");
-              console.log("🌟 Star source fallback (faint):", DATA_BASE_URL + "stars");
-              console.log("🔧 core.star_linear_scale =", core.star_linear_scale);
-              console.log("🔧 core.star_relative_scale =", core.star_relative_scale);
-              console.log("🔧 core.bortle_index =", core.bortle_index);
-              console.log("🔧 core.display_limit_mag =", core.display_limit_mag);
-              console.log("🔧 core.exposure_scale =", core.exposure_scale);
-              console.log("🔧 core.fov (deg) =", (core.fov * 180) / Math.PI);
+              // ── Diagnostic: dump ALL engine APIs ──
+              console.log("═══ STEL METHODS ═══", Object.getOwnPropertyNames(Object.getPrototypeOf(stel)).filter(k => typeof stel[k] === 'function').sort());
+              console.log("═══ STEL ALL KEYS ═══", Object.keys(stel).sort());
+              console.log("═══ CORE KEYS ═══", Object.keys(core));
+              // Try to enumerate core modules
+              const modules = ['stars', 'planets', 'dsos', 'constellations', 'milkyway', 'landscapes', 'atmosphere', 'skycultures', 'hips', 'observer'];
+              for (const m of modules) {
+                if (core[m]) {
+                  const keys = Object.keys(core[m]);
+                  console.log(`═══ core.${m} KEYS ═══`, keys);
+                }
+              }
+              console.log("═══ CORE PROPS ═══", {
+                star_linear_scale: core.star_linear_scale,
+                star_relative_scale: core.star_relative_scale,
+                bortle_index: core.bortle_index,
+                display_limit_mag: core.display_limit_mag,
+                exposure_scale: core.exposure_scale,
+                fov_deg: (core.fov * 180) / Math.PI,
+              });
 
               // Listen for selection changes
               stel.change((obj: any, attr: string) => {
