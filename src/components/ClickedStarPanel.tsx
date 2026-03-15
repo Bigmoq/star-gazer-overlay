@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { X, Sparkles, Compass, Sun } from "lucide-react";
+import { X, Sparkles, Compass, Sun, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getStarStory } from "@/lib/starStories";
 import type { ClickedStarInfo } from "@/hooks/useStellariumEngine";
 
 interface Props {
@@ -21,6 +22,8 @@ const DataRow = ({ icon, label, value, isLtr }: { icon: React.ReactNode; label: 
 );
 
 const ClickedStarPanel = ({ star, onDismiss }: Props) => {
+  const story = getStarStory(star.identifier || star.name);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30, scale: 0.95 }}
@@ -77,6 +80,20 @@ const ClickedStarPanel = ({ star, onDismiss }: Props) => {
           <DataRow icon={<Sparkles className="w-3.5 h-3.5" />} label="القدر الظاهري" value={star.magnitude} />
           <DataRow icon={<Compass className="w-3.5 h-3.5" />} label="المطلع المستقيم" value={star.ra} isLtr />
           <DataRow icon={<Sun className="w-3.5 h-3.5" />} label="الميل" value={star.dec} isLtr />
+        </div>
+
+        {/* Divider */}
+        <div className="h-px" style={{ background: "linear-gradient(to left, hsl(var(--primary) / 0.4), hsl(var(--primary) / 0.1), transparent)" }} />
+
+        {/* Star Story */}
+        <div>
+          <div className="flex items-center gap-2 mb-1.5 text-muted-foreground">
+            <BookOpen className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-body uppercase tracking-[0.2em]">حكاية النجم</span>
+          </div>
+          <p className="text-[11px] font-body text-foreground/80 leading-relaxed" dir="rtl">
+            {story}
+          </p>
         </div>
       </div>
     </motion.div>
