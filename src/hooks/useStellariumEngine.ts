@@ -365,7 +365,7 @@ export function useStellariumEngine(
     };
 
     setTimeout(() => trySearch(10), 2000);
-  }, []);
+  }, [cinematicZoomToStar, options.targetFov, options.fallbackRaRad, options.fallbackDecRad]);
 
   useEffect(() => {
     const targetId = options.targetStarId;
