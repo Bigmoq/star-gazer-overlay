@@ -357,7 +357,7 @@ export function useStellariumEngine(
             console.warn("⚠️ Coordinate fallback failed:", e);
           }
           // Auto-zoom after coordinate fallback too
-          setTimeout(() => cinematicZoomToStar(options.targetFov || 0.5, 3000), 500);
+          setTimeout(() => cinematicZoomRef.current(options.targetFov || 0.5, 3000), 500);
         }
         setStarReady(true);
       } else {
