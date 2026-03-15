@@ -415,6 +415,9 @@ export function useStellariumEngine(
     requestAnimationFrame(animate);
   }, []);
 
+  // Keep ref in sync so prefindStar can call it without circular deps
+  cinematicZoomRef.current = cinematicZoomToStar;
+
   const goToStar = useCallback((starId: string, fovDeg = 0.5) => {
     if (stelRef.current) {
       const core = stelRef.current.core;
