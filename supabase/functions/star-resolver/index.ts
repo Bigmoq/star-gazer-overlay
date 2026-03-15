@@ -66,16 +66,18 @@ Deno.serve(async (req) => {
       return await resolveBySesame(query, corsHeaders);
     }
 
-    // Get aliases
-    const aliasQuery = `SELECT id FROM ident WHERE oidref = (SELECT oidref FROM ident WHERE id = '${query.replace(/'/g, "''")}' FETCH FIRST 1 ROWS ONLY) FETCH FIRST 10 ROWS ONLY`;
+    // Get aliases (including Gaia Source ID)
+    const aliasQuery = `SELECT id FROM ident WHERE oidref = (SELECT oidref FROM ident WHERE id = '${query.replace(/'/g, "''")}' FETCH FIRST 1 ROWS ONLY) FETCH FIRST 20 ROWS ONLY`;
     let aliases: string[] = [];
     let hip = '';
+    let gaiaId = '';
     try {
       const aliasUrl = `https://simbad.cds.unistra.fr/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query=${encodeURIComponent(aliasQuery)}`;
       const aliasResp = await fetch(aliasUrl);
       const aliasData = await aliasResp.json();
       aliases = (aliasData?.data || []).map((r: string[]) => r[0]);
       hip = aliases.find((a: string) => /^HIP\s?\d+/i.test(a)) || '';
+      gaiaId = aliases.find((a: string) => /^Gaia\s+(DR[23]\s+)?\d+/i.test(a)) || '';
     } catch {}
 
     return new Response(
@@ -88,6 +90,7 @@ Deno.serve(async (req) => {
         dec_deg: decDeg,
         vmag: vmag != null ? vmag.toFixed(2) : null,
         hip,
+        gaia_id: gaiaId,
         aliases,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

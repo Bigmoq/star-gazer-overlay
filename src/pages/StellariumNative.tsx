@@ -605,20 +605,38 @@ const StellariumNative = () => {
       setSearchQuery("");
 
       // After tiles load, try to select the actual star in engine
-      setTimeout(() => {
+      const tryLockStar = (attempt: number) => {
+        if (attempt <= 0) return;
         try {
-          if (data.hip) {
-            const starObj = stel.getObj(data.hip);
-            if (starObj) {
-              core.selection = starObj;
-              stel.pointAndLock(starObj, 0.5);
-              handleStarSelected(stel, starObj);
-              setStarMarker(null);
-              console.log(`✅ Engine found ${data.hip} after tile load`);
-            }
+          // Try Gaia Source ID first (works for faint stars in Gaia tiles)
+          const gaiaId = data.gaia_id;
+          const candidates = [
+            gaiaId,
+            data.hip,
+            // Try common catalog formats
+            ...(data.aliases || []).filter((a: string) => /^(HIP|HD|HR|SAO|TYC)\s/i.test(a)),
+          ].filter(Boolean);
+
+          for (const id of candidates) {
+            try {
+              const starObj = stel.getObj(id);
+              if (starObj) {
+                core.selection = starObj;
+                stel.pointAndLock(starObj, 0.5);
+                handleStarSelected(stel, starObj);
+                setStarMarker(null);
+                console.log(`✅ Engine locked onto "${id}" after tile load (attempt ${4 - attempt + 1})`);
+                return;
+              }
+            } catch {}
           }
         } catch {}
-      }, 4000);
+        // Retry after more tiles load
+        if (attempt > 1) {
+          setTimeout(() => tryLockStar(attempt - 1), 3000);
+        }
+      };
+      setTimeout(() => tryLockStar(3), 4000);
 
       console.log(`✅ Navigating to ${data.name} via SIMBAD coordinates`);
 
