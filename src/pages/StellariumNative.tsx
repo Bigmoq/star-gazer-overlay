@@ -578,7 +578,7 @@ const StellariumNative = () => {
       // Show star info from SIMBAD data
       setSelectedStar({
         name: data.name || q,
-        arabicName: arabicMap[q] ? q : (data.name || q),
+        arabicName: data.name || q,
         description: `${data.object_type || "كائن فلكي"} — تم العثور عليه عبر SIMBAD` +
           (data.spectral_type ? `\nالنوع الطيفي: ${data.spectral_type}` : '') +
           (data.aliases?.length ? `\nأسماء أخرى: ${data.aliases.slice(0, 5).join(', ')}` : ''),
