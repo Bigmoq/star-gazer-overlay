@@ -77,6 +77,10 @@ const StellariumNative = () => {
   const [fov, setFov] = useState<number | null>(null);
   const [dssUrl, setDssUrl] = useState<string | null>(null);
   const [dssOpacity, setDssOpacity] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   /* ─── Load & Initialize the Stellarium WASM Engine ─── */
   useEffect(() => {
