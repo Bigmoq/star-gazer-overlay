@@ -577,21 +577,32 @@ const StellariumNative = () => {
         } catch {}
       }
 
-      // ── Step 3: Navigate by RA/Dec coordinates directly ──
+      // ── Step 3: Navigate to RA/Dec and show marker ──
       const raRad = (data.ra_deg * Math.PI) / 180;
       const decRad = (data.dec_deg * Math.PI) / 180;
-
       const targetICRF = stel.s2c([raRad, decRad]);
-      stel.lookAt(targetICRF, 1.0);
-      setTimeout(() => stel.zoomTo(1 * Math.PI / 180, 1.0), 1200);
 
-      // Show star info from SIMBAD data
+      // Navigate camera to the star
+      stel.lookAt(targetICRF, 1.5);
+      setTimeout(() => stel.zoomTo(0.5 * Math.PI / 180, 1.5), 1800);
+
+      // Place a visual marker at the star's position
+      setStarMarker({ ra: data.ra_deg, dec: data.dec_deg, name: data.name || q });
+
+      // Auto-hide marker after 15 seconds
+      setTimeout(() => setStarMarker(null), 15000);
+
+      // Show SIMBAD data in sidebar
       setSelectedStar({
         name: data.name || q,
         arabicName: data.name || q,
-        description: `${data.object_type || "كائن فلكي"} — تم العثور عليه عبر SIMBAD` +
-          (data.spectral_type ? `\nالنوع الطيفي: ${data.spectral_type}` : '') +
-          (data.aliases?.length ? `\nأسماء أخرى: ${data.aliases.slice(0, 5).join(', ')}` : ''),
+        description: [
+          data.object_type ? `النوع: ${data.object_type}` : null,
+          data.spectral_type ? `الطيف: ${data.spectral_type}` : null,
+          data.vmag ? `القدر الظاهري: ${data.vmag}` : null,
+          data.aliases?.length ? `أسماء أخرى: ${data.aliases.slice(0, 5).join(', ')}` : null,
+          `📍 تم تحديد الموقع عبر قاعدة بيانات SIMBAD الفلكية`,
+        ].filter(Boolean).join('\n'),
         magnitude: data.vmag || "—",
         ra: `${(data.ra_deg / 15).toFixed(4)}h`,
         dec: `${data.dec_deg > 0 ? '+' : ''}${data.dec_deg.toFixed(4)}°`,
@@ -600,7 +611,23 @@ const StellariumNative = () => {
       setSearchOpen(false);
       setSearchQuery("");
 
-      console.log(`✅ Navigated to ${data.name} via SIMBAD coordinates`);
+      // After tiles load, try to select the actual star in engine
+      setTimeout(() => {
+        try {
+          if (data.hip) {
+            const starObj = stel.getObj(data.hip);
+            if (starObj) {
+              core.selection = starObj;
+              stel.pointAndLock(starObj, 0.5);
+              handleStarSelected(stel, starObj);
+              setStarMarker(null);
+              console.log(`✅ Engine found ${data.hip} after tile load`);
+            }
+          }
+        } catch {}
+      }, 4000);
+
+      console.log(`✅ Navigating to ${data.name} via SIMBAD coordinates`);
 
     } catch (e: any) {
       console.error("Search error:", e);
