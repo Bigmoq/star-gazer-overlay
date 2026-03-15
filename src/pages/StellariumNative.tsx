@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Compass, Sun, Eye, X, Menu, Sparkles, MapPin, Layers, Moon, Mountain, Grid3X3, Telescope, Clock, PenTool, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import StarMarkerOverlay from "@/components/StarMarkerOverlay";
 import { Slider } from "@/components/ui/slider";
 
 /* ─── Custom Arabic Names Database ─── */
